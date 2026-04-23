@@ -8,9 +8,12 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./qms_salud.db")
 
+# Replace psycopg2 driver with psycopg for SQLAlchemy
+db_url = DATABASE_URL.replace("postgresql+psycopg2://", "postgresql+psycopg://").replace("postgres+psycopg2://", "postgresql+psycopg://")
+
 engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+    db_url,
+    connect_args={"check_same_thread": False} if "sqlite" in db_url else {}
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
