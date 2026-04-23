@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% set active_page = "talento" %}
+{% set p = permisos.get('talento', {}) %}
+{% block title %}Capacitaciones — QMS Salud{% endblock %}
+{% block page_title %}Talento Humano{% endblock %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}
+  <a href="/talento/plantilla-capacitaciones" class="btn btn-secondary">⬇ Plantilla .xlsx</a>
+  <a href="/talento/capacitaciones/nueva" class="btn btn-primary">+ Nueva capacitación</a>
+  {% endif %}
+  <a href="/talento" class="btn btn-secondary">← Volver</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Plan de capacitaciones</h1>
+    <div class="subtitle">Capacitaciones programadas, en curso y realizadas</div>
+  </div>
+</div>
+
+{% if request.query_params.get('importadas') %}
+<div class="alert alert-success mb-4">✅ {{ request.query_params.get('importadas') }} capacitación(es) importada(s) con sus participantes.</div>
+{% endif %}
+{% if request.query_params.get('error') %}
+<div class="alert alert-danger mb-4">Error al procesar el archivo. Use la plantilla .xlsx del sistema.</div>
+{% endif %}
+
+{% if p.get('puede_crear') %}
+<div class="card mb-4" style="padding:14px;">
+  <div style="font-size:12px; font-weight:600; color:var(--text2); margin-bottom:8px;">📤 Carga masiva desde Excel</div>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+    <a href="/talento/plantilla-capacitaciones" class="btn btn-secondary btn-sm">⬇ Descargar plantilla .xlsx</a>
+    <form action="/talento/importar-capacitaciones" method="post" enctype="multipart/form-data" style="display:flex; gap:6px; align-items:center;">
+      <input type="file" name="archivo" accept=".xls,.xlsx" class="form-control" style="width:auto; font-size:12px;">
+      <button type="submit" class="btn btn-primary btn-sm">📤 Importar</button>
+    </form>
+  </div>
+  <div style="font-size:11px; color:var(--text3);">La plantilla incluye: título, tipo, capacitador, institución, fecha, modalidad, lugar, área o cédulas de participantes y responsable.</div>
+</div>
+{% endif %}
+
+<form method="get" class="filters-bar mb-4">
+  <select name="estado" class="form-control">
+    <option value="">Todos los estados</option>
+    <option value="programada" {% if estado == 'programada' %}selected{% endif %}>Programadas</option>
+    <option value="realizada"  {% if estado == 'realizada'  %}selected{% endif %}>Realizadas</option>
+    <option value="cancelada"  {% if estado == 'cancelada'  %}selected{% endif %}>Canceladas</option>
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if estado %}<a href="/talento/capacitaciones" class="btn btn-secondary">✕ Limpiar</a>{% endif %}
+</form>
+
+{% if capacitaciones %}
+<!-- Kanban por estado -->
+{% set programadas = capacitaciones | selectattr('estado', 'equalto', 'programada') | list %}
+{% set realizadas  = capacitaciones | selectattr('estado', 'equalto', 'realizada')  | list %}
+{% set canceladas  = capacitaciones | selectattr('estado', 'equalto', 'cancelada')  | list %}
+
+{% if not estado %}
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px;">
+
+  <!-- Programadas -->
+  <div>
+    <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; padding:6px 10px; background:var(--bg3); border-radius:6px;">
+      📅 Programadas ({{ programadas|length }})
+    </div>
+    {% for cap in programadas %}{% include "talento/_cap_card.html" %}{% endfor %}
+    {% if not programadas %}<div style="font-size:13px; color:var(--text3); padding:8px;">Sin capacitaciones programadas.</div>{% endif %}
+  </div>
+
+  <!-- Realizadas -->
+  <div>
+    <div style="font-size:12px; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; padding:6px 10px; background:var(--bg3); border-radius:6px;">
+      ✅ Realizadas ({{ realizadas|length }})
+    </div>
+    {% for cap in realizadas %}{% include "talento/_cap_card.html" %}{% endfor %}
+    {% if not realizadas %}<div style="font-size:13px; color:var(--text3); padding:8px;">Sin capacitaciones realizadas.</div>{% endif %}
+  </div>
+
+  <!-- Canceladas -->
+  <div>
+    <div style="font-size:12px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; padding:6px 10px; background:var(--bg3); border-radius:6px;">
+      ✕ Canceladas ({{ canceladas|length }})
+    </div>
+    {% for cap in canceladas %}{% include "talento/_cap_card.html" %}{% endfor %}
+    {% if not canceladas %}<div style="font-size:13px; color:var(--text3); padding:8px;">Sin canceladas.</div>{% endif %}
+  </div>
+</div>
+
+{% else %}
+<!-- Vista filtrada: tabla -->
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th><th>Tipo</th><th>Fecha</th><th>Responsable</th><th>Participantes</th><th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cap in capacitaciones %}
+        <tr>
+          <td style="font-weight:500;">{{ cap.titulo }}</td>
+          <td><span class="badge badge-blue">{{ cap.tipo or '—' }}</span></td>
+          <td style="font-size:12px; color:var(--text3);">{{ cap.fecha_programada.strftime('%d/%m/%Y') if cap.fecha_programada else '—' }}</td>
+          <td style="font-size:12px; color:var(--text2);">{{ cap.responsable.nombres + ' ' + cap.responsable.apellidos if cap.responsable else '—' }}</td>
+          <td style="font-size:13px; text-align:center;">{{ cap.asistentes|length }}</td>
+          <td>
+            <span class="badge {% if cap.estado == 'realizada' %}badge-green{% elif cap.estado == 'cancelada' %}badge-gray{% else %}badge-blue{% endif %}">
+              {{ cap.estado }}
+            </span>
+          </td>
+          <td><a href="/talento/capacitaciones/{{ cap.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">📚</div>
+    <p>No hay capacitaciones registradas.</p>
+    {% if p.get('puede_crear') %}<a href="/talento/capacitaciones/nueva" class="btn btn-primary" style="margin-top:12px;">Crear primera capacitación</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

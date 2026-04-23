@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set active_page = "auditorias" %}
+{% block title %}Auditorías — QMS Salud{% endblock %}
+{% block page_title %}Auditorías{% endblock %}
+{% set p = permisos.get('auditorias', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/auditorias/nueva" class="btn btn-primary">+ Nueva auditoría</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Auditorías e inspecciones</h1>
+    <div class="subtitle">Plan de auditorías, hallazgos y seguimiento de cumplimiento</div>
+  </div>
+</div>
+
+<form method="get" class="filters-bar mb-4">
+  <select name="estado" class="form-control">
+    <option value="">Todos los estados</option>
+    <option value="planificada" {% if filtro_estado == 'planificada' %}selected{% endif %}>Planificada</option>
+    <option value="en_curso" {% if filtro_estado == 'en_curso' %}selected{% endif %}>En curso</option>
+    <option value="cerrada" {% if filtro_estado == 'cerrada' %}selected{% endif %}>Cerrada</option>
+    <option value="cancelada" {% if filtro_estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if filtro_estado %}<a href="/auditorias" class="btn btn-secondary">✕ Limpiar</a>{% endif %}
+</form>
+
+{% if auditorias %}
+<div style="display:flex; flex-direction:column; gap:10px;">
+  {% for aud in auditorias %}
+  <div class="card" style="padding:16px;">
+    <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:240px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
+          <span class="font-mono" style="font-size:11px; color:var(--text3);">{{ aud.codigo }}</span>
+          <span class="badge
+            {% if aud.estado.value == 'cerrada' %}badge-green
+            {% elif aud.estado.value == 'en_curso' %}badge-yellow
+            {% elif aud.estado.value == 'planificada' %}badge-blue
+            {% else %}badge-gray{% endif %}">
+            {{ aud.estado.value }}
+          </span>
+          {% if aud.tipo %}
+          <span class="badge badge-gray">{{ aud.tipo }}</span>
+          {% endif %}
+        </div>
+        <a href="/auditorias/{{ aud.id }}" style="font-size:15px; font-weight:600; color:var(--text); display:block;">
+          {{ aud.titulo }}
+        </a>
+        <div style="font-size:12px; color:var(--text3); margin-top:4px;">
+          📋 {{ aud.proceso_auditado or 'Sin proceso' }}
+          {% if aud.norma_referencia %} · 📐 {{ aud.norma_referencia }}{% endif %}
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
+        <div style="font-size:12px; color:var(--text2);">
+          👤 {{ aud.lider.nombre + ' ' + aud.lider.apellido if aud.lider else '—' }}
+        </div>
+        {% if aud.fecha_inicio %}
+        <div style="font-size:12px; color:var(--text3);">
+          📅 {{ aud.fecha_inicio.strftime('%d/%m/%Y') }}
+          {% if aud.fecha_fin %} → {{ aud.fecha_fin.strftime('%d/%m/%Y') }}{% endif %}
+        </div>
+        {% endif %}
+        <div style="display:flex; gap:4px; margin-top:4px;">
+          <a href="/auditorias/{{ aud.id }}" class="btn btn-secondary btn-sm">Ver detalle</a>
+        </div>
+      </div>
+    </div>
+    {% if aud.hallazgos %}
+    <div class="divider" style="margin:12px 0;"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      {% set nc = aud.hallazgos | selectattr('tipo', 'equalto', 'no_conformidad') | list | length %}
+      {% set obs = aud.hallazgos | selectattr('tipo', 'equalto', 'observacion') | list | length %}
+      {% set opm = aud.hallazgos | selectattr('tipo', 'equalto', 'oportunidad') | list | length %}
+      {% if nc > 0 %}<span class="badge badge-red">{{ nc }} no conformidad{{ 'es' if nc > 1 else '' }}</span>{% endif %}
+      {% if obs > 0 %}<span class="badge badge-yellow">{{ obs }} observación{{ 'es' if obs > 1 else '' }}</span>{% endif %}
+      {% if opm > 0 %}<span class="badge badge-blue">{{ opm }} oportunidad{{ 'es' if opm > 1 else '' }}</span>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">✅</div>
+    <p>No hay auditorías registradas.</p>
+    {% if p.get('puede_crear') %}<a href="/auditorias/nueva" class="btn btn-primary" style="margin-top:12px;">Crear primera auditoría</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

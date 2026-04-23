@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% set active_page = "comites" %}
+{% block title %}Comités — QMS Salud{% endblock %}
+{% block page_title %}Comités{% endblock %}
+{% set p = permisos.get('comites', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/comites/nuevo-comite" class="btn btn-primary">+ Nuevo comité</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Comités institucionales</h1>
+    <div class="subtitle">Gestión de actas, asistentes y compromisos por comité</div>
+  </div>
+</div>
+
+{% if comites_data %}
+<div class="grid-3">
+  {% for item in comites_data %}
+  {% set c = item.comite %}
+  <div class="card" style="padding:0; overflow:hidden;">
+    <!-- Banner color por tipo -->
+    <div style="height:8px; background:
+      {% if c.tipo.value == 'calidad' %}var(--accent)
+      {% elif c.tipo.value == 'seguridad_paciente' %}var(--red)
+      {% elif c.tipo.value == 'etica' %}var(--purple)
+      {% elif c.tipo.value == 'iaas' %}var(--orange)
+      {% elif c.tipo.value == 'farmacia' %}var(--green)
+      {% elif c.tipo.value == 'historias_clinicas' %}var(--teal)
+      {% else %}var(--text3){% endif %};"></div>
+    <div style="padding:20px;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
+        <div>
+          <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px;">{{ c.nombre }}</div>
+          <span class="badge {{ item.color }}">{{ item.label }}</span>
+        </div>
+        <span style="font-size:11px; color:var(--text3); background:var(--bg3); padding:3px 8px; border-radius:20px; border:1px solid var(--border);">{{ c.periodicidad }}</span>
+      </div>
+
+      {% if c.descripcion %}
+      <div style="font-size:12px; color:var(--text3); margin-bottom:14px; line-height:1.5;">{{ c.descripcion[:100] }}{% if c.descripcion|length > 100 %}…{% endif %}</div>
+      {% endif %}
+
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;">
+        <div style="text-align:center; padding:10px; background:var(--bg3); border-radius:8px;">
+          <div style="font-size:20px; font-weight:700; color:var(--accent); font-family:'JetBrains Mono',monospace;">{{ item.total_actas }}</div>
+          <div style="font-size:10px; color:var(--text3);">Actas</div>
+        </div>
+        <div style="text-align:center; padding:10px; background:var(--bg3); border-radius:8px;">
+          <div style="font-size:20px; font-weight:700; color:{% if item.compromisos_pendientes > 0 %}var(--yellow){% else %}var(--green){% endif %}; font-family:'JetBrains Mono',monospace;">{{ item.compromisos_pendientes }}</div>
+          <div style="font-size:10px; color:var(--text3);">Pendientes</div>
+        </div>
+        <div style="text-align:center; padding:10px; background:var(--bg3); border-radius:8px;">
+          <div style="font-size:11px; font-weight:600; color:var(--text2);">
+            {% if item.ultima_acta %}{{ item.ultima_acta.fecha.strftime('%d/%m/%Y') }}{% else %}—{% endif %}
+          </div>
+          <div style="font-size:10px; color:var(--text3);">Última acta</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <a href="/comites/{{ c.id }}" class="btn btn-primary btn-sm" style="flex:1; justify-content:center;">Ver actas</a>
+        <a href="/comites/{{ c.id }}/nueva-acta" class="btn btn-secondary btn-sm">+ Acta</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">🏛️</div>
+    <p>No hay comités registrados aún.</p>
+    <a href="/comites/nuevo-comite" class="btn btn-primary" style="margin-top:16px;">Crear primer comité</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

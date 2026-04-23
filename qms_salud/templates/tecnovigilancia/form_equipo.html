@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set active_page = "tecnovigilancia" %}
+{% block title %}Nuevo Equipo Biomédico{% endblock %}
+{% block page_title %}Nuevo Equipo Biomédico{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Registrar equipo biomédico</h1><div class="subtitle">Se generará un código QR único para este equipo</div></div><a href="/tecnovigilancia" class="btn btn-secondary">← Volver</a></div>
+<div style="max-width:640px;"><div class="card">
+  <form action="/tecnovigilancia/nuevo-equipo" method="post">
+    <div class="form-group"><label class="form-label">Nombre del equipo *</label><input type="text" name="nombre" class="form-control" required placeholder="Monitor de signos vitales, Ventilador…"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Marca</label><input type="text" name="marca" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Modelo</label><input type="text" name="modelo" class="form-control"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">N° de serie</label><input type="text" name="serie" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Área</label><input type="text" name="area" class="form-control" placeholder="UCI, Urgencias…"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Ubicación exacta</label><input type="text" name="ubicacion" class="form-control" placeholder="Sala 3, cama 2…"></div>
+    <div class="form-group"><label class="form-label">Estado</label>
+      <select name="estado" class="form-control"><option value="operativo">Operativo</option><option value="mantenimiento">En mantenimiento</option><option value="baja">De baja</option></select>
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;"><a href="/tecnovigilancia" class="btn btn-secondary">Cancelar</a><button type="submit" class="btn btn-primary">🏥 Registrar y generar QR</button></div>
+  </form>
+</div></div>
+{% endblock %}

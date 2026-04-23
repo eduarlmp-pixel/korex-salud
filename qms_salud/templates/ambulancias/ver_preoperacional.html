@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% set active_page = "ambulancias" %}
+{% block title %}Preoperacional #{{ pre.id }} — QMS Salud{% endblock %}
+{% block page_title %}Ver Preoperacional{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Preoperacional #{{ pre.id }}</h1>
+    <div class="subtitle">{{ amb.placa }} · {{ pre.fecha.strftime('%d/%m/%Y %H:%M') }} · Turno {{ pre.turno }}</div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="/ambulancias/{{ amb.id }}/preoperacional/{{ pre.id }}/pdf" class="btn btn-success">📄 Descargar</a>
+    <a href="/ambulancias/{{ amb.id }}" class="btn btn-secondary">← Volver</a>
+  </div>
+</div>
+
+<div class="grid-2 mb-4">
+  <div class="card">
+    <div class="detail-section-title">Datos generales</div>
+    <div class="form-row">
+      <div class="detail-field"><div class="field-label">Conductor</div><div class="field-value">{{ pre.conductor.nombres + ' ' + pre.conductor.apellidos if pre.conductor else '—' }}</div></div>
+      <div class="detail-field"><div class="field-label">Turno</div><div class="field-value">{{ pre.turno }}</div></div>
+      <div class="detail-field"><div class="field-label">Km inicio</div><div class="field-value font-mono">{{ pre.kilometraje_inicio }}</div></div>
+      <div class="detail-field"><div class="field-label">Estado firma</div>
+        <div class="field-value"><span class="badge {% if pre.firmado %}badge-green{% else %}badge-yellow{% endif %}">{% if pre.firmado %}✓ Firmado{% else %}Sin firma{% endif %}</span></div>
+      </div>
+    </div>
+    {% if pre.observaciones %}
+    <div class="detail-field"><div class="field-label">Observaciones</div><div class="field-value" style="color:var(--text2);">{{ pre.observaciones }}</div></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="detail-section-title">Firma del conductor</div>
+    {% if pre.firma_conductor %}
+    <img src="{{ pre.firma_conductor }}" style="max-width:100%; max-height:140px; border:1px solid var(--border); border-radius:8px; background:#fff; display:block;">
+    <div style="font-size:11px; color:var(--text3); margin-top:6px;">{{ pre.conductor.nombres + ' ' + pre.conductor.apellidos if pre.conductor else '—' }}</div>
+    {% else %}
+    <div style="color:var(--text3); font-size:13px;">Sin firma registrada</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="detail-section-title">Ítems inspeccionados</div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:6px;">
+    {% for campo, label in items %}
+    {% set val = pre[campo] if pre[campo] is defined else 'na' %}
+    {% set v = pre.__dict__.get(campo, 'na') %}
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border:1px solid var(--border); border-radius:7px; background:var(--bg3);">
+      <span style="font-size:12px; color:var(--text2);">{{ label }}</span>
+      <span style="font-size:13px; font-weight:700;
+        color:{% if v == 'ok' %}var(--green){% elif v == 'nok' %}var(--red){% else %}var(--text3){% endif %};">
+        {% if v == 'ok' %}✓ OK{% elif v == 'nok' %}✗ NOK{% else %}N/A{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

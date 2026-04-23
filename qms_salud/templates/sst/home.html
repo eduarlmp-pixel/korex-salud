@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set active_page = "sst" %}
+{% set p = permisos.get('sst', {}) %}
+{% block title %}SST — QMS Salud{% endblock %}
+{% block page_title %}Seguridad y Salud en el Trabajo{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Seguridad y Salud en el Trabajo</h1><div class="subtitle">Inspecciones, capacitaciones y condiciones inseguras</div></div>
+</div>
+<div class="stats-grid mb-6">
+  <div class="stat-card blue"><div class="label">Inspecciones</div><div class="value">{{ inspecciones|length }}</div><div class="sub">registradas</div></div>
+  <div class="stat-card {% if condiciones_abiertas > 0 %}red{% else %}green{% endif %}"><div class="label">Condiciones inseguras</div><div class="value">{{ condiciones_abiertas }}</div><div class="sub">abiertas</div></div>
+  <div class="stat-card teal"><div class="label">Capacitaciones</div><div class="value">{{ capacitaciones|length }}</div><div class="sub">registradas</div></div>
+</div>
+<div class="grid-3 mb-4">
+  {% if p.get('puede_crear') %}
+  <a href="/sst/inspeccion/nueva?tipo=extintor" class="home-card">
+    <div class="home-card-banner" style="background:linear-gradient(135deg,#991b1b,#f87171);">🧯</div>
+    <div class="home-card-body"><div class="home-card-title">Inspección extintores</div><div class="home-card-sub">Checklist de extintores por área</div></div>
+  </a>
+  <a href="/sst/inspeccion/nueva?tipo=botiquin" class="home-card">
+    <div class="home-card-banner" style="background:linear-gradient(135deg,#065f46,#10b981);">🩹</div>
+    <div class="home-card-body"><div class="home-card-title">Inspección botiquines</div><div class="home-card-sub">Verificación de insumos</div></div>
+  </a>
+  <a href="/sst/capacitacion/nueva" class="home-card">
+    <div class="home-card-banner" style="background:linear-gradient(135deg,#1d4ed8,#60a5fa);">📚</div>
+    <div class="home-card-body"><div class="home-card-title">Nueva capacitación</div><div class="home-card-sub">Evaluación o socialización</div></div>
+  </a>
+  <a href="/sst/condicion/nueva" class="home-card">
+    <div class="home-card-banner" style="background:linear-gradient(135deg,#92400e,#fbbf24);">⚠️</div>
+    <div class="home-card-body"><div class="home-card-title">Condición insegura</div><div class="home-card-sub">Reportar y notificar al área</div></div>
+  </a>
+  {% endif %}
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Últimas inspecciones</div></div>
+    {% if inspecciones %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tipo</th><th>Ubicación</th><th>Fecha</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for i in inspecciones %}
+        <tr>
+          <td><span class="badge {% if i.tipo.value == 'extintor' %}badge-red{% else %}badge-green{% endif %}">{{ i.tipo.value }}</span></td>
+          <td style="font-size:12px;">{{ i.ubicacion or '—' }}</td>
+          <td style="font-size:12px; color:var(--text3);">{{ i.creado_en.strftime('%d/%m/%Y') }}</td>
+          <td><span class="badge {% if i.estado == 'conforme' %}badge-green{% else %}badge-red{% endif %}">{{ i.estado }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="empty-state" style="padding:24px;"><div class="icon">🧯</div><p>Sin inspecciones registradas</p></div>{% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Capacitaciones recientes</div></div>
+    {% if capacitaciones %}
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      {% for cap in capacitaciones %}
+      <a href="/sst/capacitacion/{{ cap.id }}" style="text-decoration:none;">
+        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:13px;font-weight:600;color:var(--text);">{{ cap.tema }}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">
+            <span class="badge {% if cap.tipo.value == 'evaluacion' %}badge-blue{% else %}badge-teal{% endif %}">{{ cap.tipo.value }}</span>
+            · {{ cap.area or '—' }} · {{ cap.fecha.strftime('%d/%m/%Y') if cap.fecha else '—' }}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty-state" style="padding:24px;"><div class="icon">📚</div><p>Sin capacitaciones</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

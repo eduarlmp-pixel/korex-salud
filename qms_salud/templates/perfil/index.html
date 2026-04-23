@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% set active_page = "perfil" %}
+{% block title %}Mi perfil — QMS Salud{% endblock %}
+{% block page_title %}Mi perfil{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Mi perfil</h1><div class="subtitle">Datos de tu cuenta y firma digital</div></div>
+</div>
+
+{% if request.query_params.get('ok') %}
+<div class="alert alert-success">✅ Cambios guardados correctamente.</div>
+{% endif %}
+
+<div class="grid-2">
+
+  <!-- ── Columna izquierda: datos + actas ── -->
+  <div>
+
+    <!-- Datos personales -->
+    <div class="card mb-4">
+      <div class="detail-section-title">Información de la cuenta</div>
+      <form action="/perfil/actualizar" method="post" enctype="multipart/form-data">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombres *</label>
+            <input type="text" name="nombre" class="form-control" value="{{ user.nombre }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apellidos *</label>
+            <input type="text" name="apellido" class="form-control" value="{{ user.apellido }}" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cargo</label>
+            <input type="text" name="cargo" class="form-control" value="{{ user.cargo or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Área</label>
+            <input type="text" name="area" class="form-control" value="{{ user.area or '' }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nueva contraseña <span style="color:var(--text3);font-weight:400;">(vacío = sin cambios)</span></label>
+          <input type="password" name="nueva_password" class="form-control" placeholder="••••••••">
+        </div>
+        <!-- firma_pad oculto para no romper el endpoint -->
+        <input type="hidden" name="firma_pad" value="">
+        <button type="submit" class="btn btn-primary">💾 Guardar datos</button>
+      </form>
+    </div>
+
+    <!-- Actas recientes -->
+    <div class="card">
+      <div class="detail-section-title">Actas recientes — clic para firmar</div>
+      {% if actas_recientes %}
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        {% for acta in actas_recientes %}
+        {% set ya_firme = acta.firmas | selectattr('nombre', 'equalto', user.nombre ~ ' ' ~ user.apellido) | list | length > 0 %}
+        <a href="/comites/{{ acta.comite_id }}/acta/{{ acta.id }}" style="text-decoration:none;">
+          <div style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;
+                      display:flex;align-items:center;justify-content:space-between;gap:10px;transition:all 0.15s;"
+            onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--accent-bg)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.background=''">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);">Acta N° {{ acta.numero_acta }}</div>
+              <div style="font-size:11px;color:var(--text3);">
+                {{ acta.fecha.strftime('%d/%m/%Y') if acta.fecha else '—' }}
+              </div>
+            </div>
+            <span class="badge {% if ya_firme %}badge-green{% else %}badge-yellow{% endif %}">
+              {% if ya_firme %}✓ Firmada{% else %}Pendiente{% endif %}
+            </span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:28px;">
+        <div class="icon">📋</div>
+        <p>No hay actas recientes.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ── Columna derecha: firma digital ── -->
+  <div>
+    <div class="card">
+      <div class="detail-section-title">Mi firma digital</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6;">
+        Registra tu firma una sola vez. El sistema la cargará automáticamente cada vez que necesites firmar un acta de comité, una inspección u otro documento.
+      </div>
+
+      <!-- Firma actual -->
+      {% if user.firma_imagen %}
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:8px;">✓ Firma registrada actualmente:</div>
+        <div style="border:1.5px solid var(--green);border-radius:10px;padding:14px;background:#f0fdf4;text-align:center;">
+          <img src="{{ user.firma_imagen }}" style="max-height:90px;max-width:100%;display:inline-block;">
+        </div>
+        <form action="/perfil/borrar-firma" method="post" style="margin-top:10px;">
+          <button type="submit" class="btn btn-danger btn-sm"
+                  onclick="return confirm('¿Eliminar tu firma registrada?')">🗑 Borrar firma guardada</button>
+        </form>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">Actualizar firma:</div>
+      {% else %}
+      <div class="alert alert-warning" style="margin-bottom:16px;">
+        ⚠️ Aún no tienes firma registrada. Dibújala o sube una imagen para firmar documentos automáticamente.
+      </div>
+      {% endif %}
+
+      <!-- Formulario de firma -->
+      <form action="/perfil/actualizar" method="post" enctype="multipart/form-data" id="formFirma">
+        <!-- Campos requeridos del endpoint (ocultos, con valores actuales) -->
+        <input type="hidden" name="nombre"   value="{{ user.nombre }}">
+        <input type="hidden" name="apellido" value="{{ user.apellido }}">
+        <input type="hidden" name="cargo"    value="{{ user.cargo or '' }}">
+        <input type="hidden" name="area"     value="{{ user.area or '' }}">
+        <input type="hidden" name="nueva_password" value="">
+
+        <!-- Opción 1: Dibujar -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;">✍️ Dibuja tu firma</div>
+          <div style="border:2px dashed var(--border);border-radius:10px;padding:4px;background:#fff;">
+            <canvas id="firmaCanvas" width="400" height="150"
+              style="border-radius:8px;cursor:crosshair;touch-action:none;width:100%;display:block;background:#fff;"></canvas>
+          </div>
+          <input type="hidden" name="firma_pad" id="firmaPadInput">
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+            <button type="button" onclick="limpiarPad()" class="btn btn-secondary btn-sm">🗑 Limpiar</button>
+            <span id="padStatus" style="font-size:11px;color:var(--text3);">Sin dibujar</span>
+          </div>
+        </div>
+
+        <!-- Opción 2: Subir imagen -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">📎 O sube una imagen (JPG, PNG)</div>
+          <input type="file" name="firma_archivo" class="form-control"
+                 accept="image/jpeg,image/png,image/jpg" onchange="previsualizarFirma(this)">
+          <div id="preview-firma" style="margin-top:8px;display:none;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Vista previa:</div>
+            <img id="img-preview" style="max-height:70px;border:1px solid var(--border);border-radius:6px;padding:6px;background:#fff;">
+          </div>
+        </div>
+
+        <button type="submit" onclick="return prepararFirma()" class="btn btn-primary" style="width:100%;justify-content:center;">
+          💾 Guardar firma
+        </button>
+      </form>
+
+      <div style="margin-top:14px;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text3);line-height:1.6;">
+        <strong>¿Cómo funciona?</strong><br>
+        Al abrir un acta de comité u otro documento, el sistema detecta que tienes una firma guardada y la precarga automáticamente. Solo debes confirmar con un clic.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Canvas de firma ──
+const canvas = document.getElementById('firmaCanvas');
+const ctx    = canvas.getContext('2d');
+let dibujando = false, hasPad = false;
+
+ctx.strokeStyle = '#0d1f35';
+ctx.lineWidth   = 2.5;
+ctx.lineCap     = 'round';
+ctx.lineJoin    = 'round';
+
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const sx = canvas.width / r.width, sy = canvas.height / r.height;
+  if (e.touches) return { x: (e.touches[0].clientX - r.left) * sx, y: (e.touches[0].clientY - r.top) * sy };
+  return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
+}
+
+canvas.onmousedown = e => { dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+canvas.onmousemove = e => {
+  if (!dibujando) return;
+  const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+  hasPad = true;
+  document.getElementById('padStatus').textContent = '✓ Firma dibujada';
+  document.getElementById('padStatus').style.color = 'var(--green)';
+};
+canvas.onmouseup   = () => dibujando = false;
+canvas.onmouseleave = () => dibujando = false;
+
+canvas.addEventListener('touchstart', e => { e.preventDefault(); dibujando = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!dibujando) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasPad = true; }, { passive: false });
+canvas.ontouchend = () => dibujando = false;
+
+function limpiarPad() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasPad = false;
+  document.getElementById('firmaPadInput').value = '';
+  document.getElementById('padStatus').textContent = 'Sin dibujar';
+  document.getElementById('padStatus').style.color = 'var(--text3)';
+}
+
+function prepararFirma() {
+  if (hasPad) {
+    document.getElementById('firmaPadInput').value = canvas.toDataURL('image/png');
+  }
+  return true;
+}
+
+// ── Preview imagen subida ──
+function previsualizarFirma(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('img-preview').src = e.target.result;
+      document.getElementById('preview-firma').style.display = 'block';
+      limpiarPad();
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

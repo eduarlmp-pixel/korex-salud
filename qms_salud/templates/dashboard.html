@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+{% block title %}Dashboard — QMS Salud{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Bienvenido, {{ user.nombre }} 👋</h1>
+    <div class="subtitle">Resumen del sistema de gestión de calidad</div>
+  </div>
+</div>
+
+<!-- KPIs principales -->
+<div class="stats-grid mb-6">
+  <div class="stat-card blue">
+    <div class="label">Documentos</div>
+    <div class="value">{{ stats.total_docs }}</div>
+    <div class="sub">{{ stats.docs_aprobados }} aprobados · {{ stats.docs_borrador }} borradores</div>
+  </div>
+  <div class="stat-card {% if stats.aud_en_curso > 0 %}yellow{% else %}green{% endif %}">
+    <div class="label">Auditorías</div>
+    <div class="value">{{ stats.total_auditorias }}</div>
+    <div class="sub">{{ stats.aud_en_curso }} en curso · {{ stats.aud_planificadas }} planificadas</div>
+  </div>
+  <div class="stat-card {% if stats.acc_pendientes > 3 %}yellow{% else %}green{% endif %}">
+    <div class="label">Acciones de mejora</div>
+    <div class="value">{{ stats.total_acciones }}</div>
+    <div class="sub">{{ stats.acc_pendientes }} pendientes · {{ stats.acc_completadas }} completadas</div>
+  </div>
+  <div class="stat-card {% if stats.pqrs_abiertas > 5 %}red{% elif stats.pqrs_abiertas > 2 %}yellow{% else %}green{% endif %}">
+    <div class="label">PQRS</div>
+    <div class="value">{{ stats.total_pqrs }}</div>
+    <div class="sub">{{ stats.pqrs_abiertas }} abiertas · {{ stats.pqrs_en_gestion }} en gestión</div>
+  </div>
+  <div class="stat-card {% if stats.riesgos_criticos > 0 %}red{% elif stats.riesgos_altos > 3 %}yellow{% else %}green{% endif %}">
+    <div class="label">Riesgos</div>
+    <div class="value">{{ stats.total_riesgos }}</div>
+    <div class="sub">
+      {% if stats.riesgos_criticos > 0 %}
+        <span style="color:var(--red)">⚠ {{ stats.riesgos_criticos }} críticos</span>
+      {% else %}
+        {{ stats.riesgos_altos }} altos · sin críticos
+      {% endif %}
+    </div>
+  </div>
+  <div class="stat-card teal">
+    <div class="label">Empleados activos</div>
+    <div class="value">{{ stats.total_empleados }}</div>
+    <div class="sub">personal registrado</div>
+  </div>
+</div>
+
+<div class="grid-2 mb-6">
+  <!-- Indicadores -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Indicadores de calidad</div>
+        <div class="card-subtitle">Últimas mediciones registradas</div>
+      </div>
+      <a href="/indicadores" class="btn btn-secondary btn-sm">Ver todos</a>
+    </div>
+    {% if indicadores %}
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      {% for ind in indicadores %}
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:12px; font-weight:500; truncate;">{{ ind.nombre[:45] }}{% if ind.nombre|length > 45 %}…{% endif %}</div>
+          <div style="font-size:11px; color:var(--text3);">{{ ind.periodo }}</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <div style="font-size:16px; font-weight:600; font-family:'DM Mono',monospace; color:{% if ind.estado == 'cumple' %}var(--green){% else %}var(--red){% endif %}">
+            {{ ind.valor }} <span style="font-size:11px;">{{ ind.unidad }}</span>
+          </div>
+          <div style="font-size:10px; color:var(--text3);">meta: {{ ind.meta }}</div>
+        </div>
+        <span class="badge {% if ind.estado == 'cumple' %}badge-green{% else %}badge-red{% endif %}" style="flex-shrink:0;">
+          {% if ind.estado == 'cumple' %}✓{% else %}✗{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><div class="icon">📈</div><p>No hay indicadores con mediciones</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Acciones recientes -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Acciones de mejora recientes</div>
+        <div class="card-subtitle">Últimas 5 acciones registradas</div>
+      </div>
+      <a href="/mejora" class="btn btn-secondary btn-sm">Ver todas</a>
+    </div>
+    {% if acciones_recientes %}
+    <ul class="timeline">
+      {% for acc in acciones_recientes %}
+      <li class="timeline-item">
+        <div class="timeline-dot" style="background:
+          {% if acc.estado.value == 'completada' %}var(--green-bg){% elif acc.estado.value == 'en_proceso' %}var(--accent-glow){% else %}var(--bg4){% endif %}">
+          {% if acc.estado.value == 'completada' %}✅
+          {% elif acc.estado.value == 'en_proceso' %}🔄
+          {% else %}⏳{% endif %}
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-title">{{ acc.titulo[:60] }}{% if acc.titulo|length > 60 %}…{% endif %}</div>
+          <div class="timeline-meta">
+            <span class="badge badge-{% if acc.tipo == 'correctiva' %}red{% elif acc.tipo == 'preventiva' %}yellow{% else %}blue{% endif %} text-sm">{{ acc.tipo }}</span>
+            · {{ acc.proceso or 'Sin proceso' }}
+          </div>
+          <div class="progress" style="margin-top:5px;">
+            <div class="progress-bar {% if acc.porcentaje_avance == 100 %}green{% elif acc.porcentaje_avance > 50 %}blue{% else %}yellow{% endif %}"
+                 style="width:{{ acc.porcentaje_avance }}%"></div>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state"><div class="icon">🔄</div><p>No hay acciones registradas</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- PQRS recientes -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">PQRS recientes</div>
+      <div class="card-subtitle">Peticiones, quejas, reclamos y sugerencias</div>
+    </div>
+    <a href="/pqrs" class="btn btn-secondary btn-sm">Ver todas</a>
+  </div>
+  {% if pqrs_recientes %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th><th>Tipo</th><th>Descripción</th><th>Solicitante</th><th>Estado</th><th>Prioridad</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pqrs_recientes %}
+        <tr>
+          <td class="font-mono" style="font-size:11px; color:var(--text2);">{{ p.codigo }}</td>
+          <td>
+            <span class="badge
+              {% if p.tipo.value == 'queja' %}badge-red
+              {% elif p.tipo.value == 'evento_adverso' %}badge-orange
+              {% elif p.tipo.value == 'peticion' %}badge-blue
+              {% elif p.tipo.value == 'reclamo' %}badge-yellow
+              {% else %}badge-gray{% endif %}">
+              {{ p.tipo.value }}
+            </span>
+          </td>
+          <td style="max-width:300px;" class="truncate">{{ p.descripcion[:80] }}{% if p.descripcion|length > 80 %}…{% endif %}</td>
+          <td>{{ p.nombre_solicitante or '—' }}</td>
+          <td>
+            <span class="badge
+              {% if p.estado.value == 'abierta' %}badge-red
+              {% elif p.estado.value == 'en_gestion' %}badge-yellow
+              {% elif p.estado.value == 'resuelta' %}badge-green
+              {% else %}badge-gray{% endif %}">
+              {{ p.estado.value }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if p.prioridad == 'alta' %}badge-red{% elif p.prioridad == 'normal' %}badge-blue{% else %}badge-gray{% endif %}">
+              {{ p.prioridad }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><div class="icon">💬</div><p>No hay PQRS registradas</p></div>
+  {% endif %}
+</div>
+{% endblock %}

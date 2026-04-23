@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% set active_page = "ambulancias" %}
+{% block title %}{{ amb.placa }} — QMS Salud{% endblock %}
+{% block page_title %}Detalle Ambulancia{% endblock %}
+{% block topbar_actions %}
+  <a href="/ambulancias/{{ amb.id }}/preoperacional" class="btn btn-primary">+ Nuevo preoperacional</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <span style="font-size:32px;">🚑</span>
+      <div>
+        <h1>{{ amb.placa }}</h1>
+        <div class="subtitle">{{ amb.marca }} {{ amb.modelo }} {{ amb.anio }} · {{ amb.tipo }}</div>
+      </div>
+      <span class="badge {% if amb.estado.value == 'activo' %}badge-green{% elif amb.estado.value == 'taller' %}badge-yellow{% else %}badge-gray{% endif %}">{{ amb.estado.value }}</span>
+    </div>
+  </div>
+  <a href="/ambulancias" class="btn btn-secondary">← Volver</a>
+</div>
+
+<div class="grid-2 mb-6">
+  <!-- Conductores -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Conductores ({{ conductores|length }})</div>
+    </div>
+    {% if conductores %}
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+      {% for c in conductores %}
+      <div style="display:flex; align-items:center; gap:12px; padding:10px; background:var(--bg3); border-radius:8px;">
+        <div class="sidebar-avatar" style="width:36px;height:36px;font-size:13px;border-radius:9px;background:var(--accent);color:#fff;">{{ c.nombres[0] }}{{ c.apellidos[0] }}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:600;">{{ c.nombres }} {{ c.apellidos }}</div>
+          <div style="font-size:11px; color:var(--text3);">
+            Doc: {{ c.documento }} · Lic: {{ c.licencia }} ({{ c.categoria_licencia }})
+            {% if c.vencimiento_licencia %} · Vence: {{ c.vencimiento_licencia.strftime('%d/%m/%Y') }}{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="color:var(--text3); font-size:13px; padding-bottom:12px;">No hay conductores registrados.</div>
+    {% endif %}
+
+    <div class="divider"></div>
+    <div style="font-size:12px; font-weight:600; color:var(--text2); margin-bottom:10px;">Agregar conductor</div>
+    <form action="/ambulancias/{{ amb.id }}/conductor" method="post">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombres *</label><input type="text" name="nombres" class="form-control" required placeholder="Nombres"></div>
+        <div class="form-group"><label class="form-label">Apellidos *</label><input type="text" name="apellidos" class="form-control" required placeholder="Apellidos"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Documento *</label><input type="text" name="documento" class="form-control" required placeholder="Número de documento"></div>
+        <div class="form-group"><label class="form-label">N° Licencia</label><input type="text" name="licencia" class="form-control" placeholder="Número de licencia"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select name="categoria_licencia" class="form-control">
+            <option value="B1">B1</option><option value="B2">B2</option>
+            <option value="C1">C1</option><option value="C2">C2</option>
+            <option value="C3">C3</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Vencimiento licencia</label><input type="date" name="vencimiento_licencia" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Teléfono</label><input type="text" name="telefono" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-control"></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">+ Agregar conductor</button>
+    </form>
+  </div>
+
+  <!-- Preoperacionales -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Preoperacionales recientes</div>
+      <a href="/ambulancias/{{ amb.id }}/preoperacional" class="btn btn-primary btn-sm">+ Nuevo</a>
+    </div>
+    {% if preoperacionales %}
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      {% for pre in preoperacionales %}
+      <a href="/ambulancias/{{ amb.id }}/preoperacional/{{ pre.id }}" style="text-decoration:none;">
+        <div style="padding:10px 12px; border:1px solid var(--border); border-radius:8px; transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'; this.style.background='var(--accent-bg)'" onmouseout="this.style.borderColor='var(--border)'; this.style.background=''">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <span style="font-size:13px; font-weight:600; color:var(--text);">{{ pre.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+              <span class="badge badge-gray" style="margin-left:6px; font-size:10px;">{{ pre.turno }}</span>
+            </div>
+            <span class="badge {% if pre.firmado %}badge-green{% else %}badge-yellow{% endif %}">
+              {% if pre.firmado %}✓ Firmado{% else %}Sin firma{% endif %}
+            </span>
+          </div>
+          <div style="font-size:11px; color:var(--text3); margin-top:3px;">
+            Km: {{ pre.kilometraje_inicio }} · {{ pre.conductor.nombres + ' ' + pre.conductor.apellidos if pre.conductor else 'Sin conductor' }}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:28px;">
+      <div class="icon">📋</div>
+      <p>No hay preoperacionales registrados.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

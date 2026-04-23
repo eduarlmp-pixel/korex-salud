@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% set active_page = "comites" %}
+{% block title %}{{ comite.nombre }} — QMS Salud{% endblock %}
+{% block page_title %}Detalle Comité{% endblock %}
+{% set p = permisos.get('comites', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/comites/{{ comite.id }}/nueva-acta" class="btn btn-primary">+ Nueva acta</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <h1>{{ comite.nombre }}</h1>
+      <span class="badge {{ color }}">{{ label }}</span>
+    </div>
+    <div class="subtitle">{{ comite.periodicidad }} · {{ actas|length }} acta(s) registrada(s)</div>
+  </div>
+  <a href="/comites" class="btn btn-secondary">← Volver</a>
+</div>
+
+<div class="grid-2 mb-6">
+  <!-- Actas -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Actas del comité</div>
+      </div>
+      {% if actas %}
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        {% for acta in actas %}
+        <a href="/comites/{{ comite.id }}/acta/{{ acta.id }}" style="text-decoration:none;">
+          <div style="padding:14px; border:1px solid var(--border); border-radius:8px; transition:all 0.15s; background:var(--bg2);" onmouseover="this.style.borderColor='var(--accent)'; this.style.background='var(--accent-bg)'" onmouseout="this.style.borderColor='var(--border)'; this.style.background='var(--bg2)'">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="font-mono" style="font-size:12px; color:var(--text3);">Acta N° {{ acta.numero_acta }}</span>
+                <span class="badge {% if acta.estado.value == 'realizado' %}badge-green{% elif acta.estado.value == 'programado' %}badge-blue{% else %}badge-gray{% endif %}">
+                  {{ acta.estado.value }}
+                </span>
+                {% if acta.quorum %}<span class="badge badge-teal">✓ Quórum</span>{% endif %}
+              </div>
+              <span style="font-size:12px; color:var(--text3);">{{ acta.fecha.strftime('%d/%m/%Y') }}</span>
+            </div>
+            <div style="font-size:12px; color:var(--text2);">
+              {% if acta.lugar %}📍 {{ acta.lugar }}{% endif %}
+              {% if acta.asistentes %} · 👥 {{ acta.asistentes|length }} asistente(s){% endif %}
+              {% if acta.compromisos %} · 📋 {{ acta.compromisos|length }} compromiso(s){% endif %}
+              {% if acta.archivo_nombre %} · 📎 Archivo adjunto{% endif %}
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:32px;">
+        <div class="icon">📋</div>
+        <p>No hay actas registradas.</p>
+        <a href="/comites/{{ comite.id }}/nueva-acta" class="btn btn-primary" style="margin-top:12px;">Crear primera acta</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Compromisos pendientes -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Compromisos pendientes</div>
+        <span class="badge {% if compromisos_pendientes %}badge-yellow{% else %}badge-green{% endif %}">
+          {{ compromisos_pendientes|length }}
+        </span>
+      </div>
+      {% if compromisos_pendientes %}
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        {% for comp in compromisos_pendientes %}
+        <div style="padding:12px; border:1px solid var(--border); border-left:3px solid var(--yellow); border-radius:0 8px 8px 0; background:var(--yellow-bg);">
+          <div style="font-size:13px; font-weight:500; color:var(--text); margin-bottom:4px;">{{ comp.descripcion[:80] }}{% if comp.descripcion|length > 80 %}…{% endif %}</div>
+          <div style="font-size:11px; color:var(--text3);">
+            👤 {{ comp.responsable or '—' }}
+            {% if comp.fecha_limite %} · 📅 {{ comp.fecha_limite.strftime('%d/%m/%Y') }}{% endif %}
+          </div>
+          <form action="/comites/compromiso/{{ comp.id }}/estado" method="post" style="margin-top:8px; display:flex; gap:6px;">
+            <select name="estado" class="form-control" style="width:auto; font-size:11px; padding:3px 8px;">
+              <option value="pendiente">Pendiente</option>
+              <option value="cumplido">Cumplido</option>
+              <option value="vencido">Vencido</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm" style="font-size:11px;">Actualizar</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align:center; padding:24px; color:var(--green);">
+        <div style="font-size:32px; margin-bottom:8px;">✅</div>
+        <div style="font-size:13px; font-weight:500;">Sin compromisos pendientes</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

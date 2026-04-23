@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% set active_page = "documentos" %}
+{% block title %}Documentos — QMS Salud{% endblock %}
+{% block page_title %}Gestión Documental{% endblock %}
+{% set p = permisos.get('documentos', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/documentos/nuevo" class="btn btn-primary">+ Nuevo documento</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Documentos</h1>
+    <div class="subtitle">Repositorio central de documentos del SGC</div>
+  </div>
+</div>
+
+<form method="get" class="filters-bar mb-4">
+  <input type="text" name="q" class="form-control search-input" placeholder="🔍  Buscar por título o código…" value="{{ filtros.q }}">
+  <select name="estado" class="form-control">
+    <option value="">Todos los estados</option>
+    <option value="borrador" {% if filtros.estado == 'borrador' %}selected{% endif %}>Borrador</option>
+    <option value="revision" {% if filtros.estado == 'revision' %}selected{% endif %}>En revisión</option>
+    <option value="aprobado" {% if filtros.estado == 'aprobado' %}selected{% endif %}>Aprobado</option>
+    <option value="obsoleto" {% if filtros.estado == 'obsoleto' %}selected{% endif %}>Obsoleto</option>
+  </select>
+  <select name="categoria" class="form-control">
+    <option value="">Todas las categorías</option>
+    {% for cat in categorias %}
+    <option value="{{ cat.id }}" {% if filtros.categoria == cat.id|string %}selected{% endif %}>{{ cat.nombre }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if filtros.q or filtros.estado or filtros.categoria %}
+  <a href="/documentos" class="btn btn-secondary">✕ Limpiar</a>
+  {% endif %}
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    {% if documentos %}
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Título</th>
+          <th>Categoría</th>
+          <th>Versión</th>
+          <th>Estado</th>
+          <th>Creado por</th>
+          <th>Fecha</th>
+          <th>Vistas</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in documentos %}
+        <tr>
+          <td class="font-mono" style="font-size:11px; color:var(--text2); white-space:nowrap;">{{ doc.codigo }}</td>
+          <td style="max-width:260px;">
+            <a href="/documentos/{{ doc.id }}" style="color:var(--text); font-weight:500;">
+              {{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}…{% endif %}
+            </a>
+          </td>
+          <td style="font-size:12px; color:var(--text2);">{{ doc.categoria.nombre if doc.categoria else '—' }}</td>
+          <td><span class="badge badge-gray">v{{ doc.version }}</span></td>
+          <td>
+            <span class="badge
+              {% if doc.estado.value == 'aprobado' %}badge-green
+              {% elif doc.estado.value == 'revision' %}badge-yellow
+              {% elif doc.estado.value == 'borrador' %}badge-blue
+              {% else %}badge-gray{% endif %}">
+              {{ doc.estado.value }}
+            </span>
+          </td>
+          <td style="font-size:12px; color:var(--text2);">
+            {{ doc.creador.nombre + ' ' + doc.creador.apellido if doc.creador else '—' }}
+          </td>
+          <td style="font-size:12px; color:var(--text3); white-space:nowrap;">
+            {{ doc.fecha_creacion.strftime('%d/%m/%Y') if doc.fecha_creacion else '—' }}
+          </td>
+          <td style="font-size:12px; color:var(--text3);">{{ doc.visualizaciones }}</td>
+          <td>
+            <div style="display:flex; gap:4px;">
+              <a href="/documentos/{{ doc.id }}" class="btn btn-secondary btn-sm btn-icon" title="Ver">👁</a>
+              {% if p.get('puede_editar') %}<a href="/documentos/{{ doc.id }}/editar" class="btn btn-secondary btn-sm btn-icon" title="Editar">✏️</a>{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">📁</div>
+      <p>No se encontraron documentos con los filtros aplicados.</p>
+      {% if p.get('puede_crear') %}<a href="/documentos/nuevo" class="btn btn-primary" style="margin-top:12px;">Crear primer documento</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

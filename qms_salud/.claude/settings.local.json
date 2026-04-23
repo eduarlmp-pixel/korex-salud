@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python seed.py)",
+      "Bash(uvicorn main:app --reload --port 8000)",
+      "Bash(bash start.sh)",
+      "Bash(python -c \"import main\")",
+      "Read(//mnt/c/Users/scem/Downloads/qms_salud_v6_fix/qms_salud/routers/**)",
+      "Bash(dir \"C:\\\\\\\\Users\\\\\\\\scem\\\\\\\\Downloads\\\\\\\\qms_salud_v6_fix\\\\\\\\qms_salud\\\\\\\\routers\\\\\\\\__pycache__\")",
+      "Bash(python -c \"import models\")",
+      "Bash(venv/Scripts/python -c \"import models\")",
+      "Bash(venv/Scripts/python -c \"import main\")",
+      "Bash(venv/Scripts/python -c ' *)"
+    ]
+  }
+}

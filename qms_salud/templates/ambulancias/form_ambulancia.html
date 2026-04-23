@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set active_page = "ambulancias" %}
+{% block title %}Nueva Ambulancia — QMS Salud{% endblock %}
+{% block page_title %}Nueva Ambulancia{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Registrar ambulancia</h1><div class="subtitle">Datos del vehículo de la flota</div></div>
+  <a href="/ambulancias" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:640px;">
+  <div class="card">
+    <form action="/ambulancias/nueva" method="post">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Placa *</label>
+          <input type="text" name="placa" class="form-control" required placeholder="ABC-123" style="text-transform:uppercase;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Número interno</label>
+          <input type="text" name="numero_interno" class="form-control" placeholder="AMB-01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Marca</label>
+          <input type="text" name="marca" class="form-control" placeholder="Mercedes, Ford, Chevrolet…">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modelo</label>
+          <input type="text" name="modelo" class="form-control" placeholder="Sprinter, Transit…">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Año</label>
+          <input type="number" name="anio" class="form-control" value="2020" min="2000" max="2030">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de ambulancia</label>
+          <select name="tipo" class="form-control">
+            <option value="TAB">TAB — Básica</option>
+            <option value="TAM">TAM — Medicalizada</option>
+            <option value="TAN">TAN — Neonatal</option>
+            <option value="TAE">TAE — Especializada</option>
+            <option value="MOTO">Moto de urgencias</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado inicial</label>
+        <select name="estado" class="form-control">
+          <option value="activo">Activo</option>
+          <option value="taller">En taller</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <a href="/ambulancias" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">🚑 Registrar ambulancia</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

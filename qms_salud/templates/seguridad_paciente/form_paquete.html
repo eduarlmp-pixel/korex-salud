@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set active_page = "seguridad_paciente" %}
+{% block title %}Nuevo Paquete Instruccional{% endblock %}
+{% block page_title %}Paquete Instruccional{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Nuevo paquete instruccional</h1><div class="subtitle">Protocolos y guías de seguridad del paciente</div></div>
+  <a href="/seguridad-paciente" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:680px;"><div class="card">
+  <form action="/seguridad-paciente/paquete/nuevo" method="post" enctype="multipart/form-data">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nombre *</label><input type="text" name="nombre" class="form-control" required placeholder="Ej: Paquete de prevención de caídas"></div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select name="tipo" class="form-control">
+          <option value="ulceras">Úlceras por presión</option>
+          <option value="caidas">Prevención de caídas</option>
+          <option value="infecciones">Infecciones asociadas</option>
+          <option value="medicamentos">Seguridad en medicamentos</option>
+          <option value="identificacion">Identificación del paciente</option>
+          <option value="maternidad">Maternidad segura</option>
+          <option value="lavado_manos">Lavado de manos</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Versión</label><input type="text" name="version" class="form-control" value="1.0" style="max-width:120px;"></div>
+    <div class="form-group"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="2" placeholder="Breve descripción del paquete…"></textarea></div>
+    <div class="form-group"><label class="form-label">Objetivo</label><textarea name="objetivo" class="form-control" rows="2" placeholder="Objetivo del paquete instruccional…"></textarea></div>
+    <div class="form-group"><label class="form-label">Contenido / actividades</label><textarea name="contenido" class="form-control" rows="4" placeholder="Describa las actividades, intervenciones y protocolos incluidos…"></textarea></div>
+    <div class="form-group"><label class="form-label">📎 Adjuntar archivo (PDF, Word)</label><input type="file" name="archivo" class="form-control" accept=".pdf,.doc,.docx,.pptx"></div>
+    <div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <a href="/seguridad-paciente" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary">💾 Guardar paquete</button>
+    </div>
+  </form>
+</div></div>
+{% endblock %}

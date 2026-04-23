@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% set active_page = "riesgos" %}
+{% block title %}Nuevo Riesgo — QMS Salud{% endblock %}
+{% block page_title %}Nuevo Riesgo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Registrar riesgo</h1><div class="subtitle">Caracterización de riesgo clínico o institucional</div></div>
+  <a href="/riesgos" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:760px;">
+  <div class="card">
+    <form action="/riesgos/nuevo" method="post">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Código *</label>
+          <input type="text" name="codigo" class="form-control" placeholder="RIE-001" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Proceso *</label>
+          <input type="text" name="proceso" class="form-control" placeholder="Urgencias, UCI, Farmacia…" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción del riesgo *</label>
+        <textarea name="descripcion" class="form-control" rows="2" required placeholder="¿Qué evento de riesgo puede ocurrir?"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Causa</label>
+          <textarea name="causa" class="form-control" rows="2" placeholder="¿Por qué puede ocurrir?"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Consecuencia</label>
+          <textarea name="consecuencia" class="form-control" rows="2" placeholder="¿Qué impacto tendría?"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Probabilidad (1–5) *</label>
+          <select name="probabilidad" class="form-control" required>
+            <option value="1">1 — Muy improbable</option>
+            <option value="2">2 — Improbable</option>
+            <option value="3">3 — Posible</option>
+            <option value="4">4 — Probable</option>
+            <option value="5">5 — Casi seguro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Impacto (1–5) *</label>
+          <select name="impacto" class="form-control" required>
+            <option value="1">1 — Insignificante</option>
+            <option value="2">2 — Menor</option>
+            <option value="3">3 — Moderado</option>
+            <option value="4">4 — Mayor</option>
+            <option value="5">5 — Catastrófico</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Control existente</label>
+        <textarea name="control_existente" class="form-control" rows="2" placeholder="Controles actuales para mitigar este riesgo…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Acción propuesta</label>
+        <textarea name="accion_propuesta" class="form-control" rows="2" placeholder="Acciones adicionales de mitigación…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Responsable *</label>
+        <select name="responsable_id" class="form-control" required>
+          <option value="">Seleccionar…</option>
+          {% for u in usuarios %}
+          <option value="{{ u.id }}">{{ u.nombre }} {{ u.apellido }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <a href="/riesgos" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">+ Registrar riesgo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

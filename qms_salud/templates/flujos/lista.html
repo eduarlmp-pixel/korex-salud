@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% set active_page = "flujos" %}
+{% block title %}Flujos de Trabajo — QMS Salud{% endblock %}
+{% block page_title %}Flujos de Trabajo{% endblock %}
+{% set p = permisos.get('flujos', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/flujos/nuevo" class="btn btn-primary">+ Nuevo flujo</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Flujos de trabajo</h1>
+    <div class="subtitle">Automatización de procesos hospitalarios</div>
+  </div>
+</div>
+
+<div class="grid-2 mb-6">
+  {% for flujo in flujos %}
+  <div class="card">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px;">
+      <div>
+        <div style="font-size:15px; font-weight:600;">{{ flujo.nombre }}</div>
+        <div style="font-size:12px; color:var(--text3); margin-top:3px;">📋 {{ flujo.proceso or 'Sin proceso' }}</div>
+      </div>
+      <span class="badge badge-green">activo</span>
+    </div>
+    {% if flujo.descripcion %}
+    <div style="font-size:12px; color:var(--text2); margin-bottom:12px;">{{ flujo.descripcion }}</div>
+    {% endif %}
+
+    <!-- Pasos del flujo -->
+    {% if flujo.pasos %}
+    <div style="display:flex; align-items:center; gap:0; margin-bottom:12px; overflow-x:auto; padding-bottom:4px;">
+      {% for paso in flujo.pasos | sort(attribute='orden') %}
+      <div style="display:flex; align-items:center; flex-shrink:0;">
+        <div style="background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:5px 10px; font-size:11px; text-align:center; min-width:80px;">
+          <div style="color:var(--text3); font-size:9px; margin-bottom:1px;">Paso {{ paso.orden }}</div>
+          <div style="font-weight:500; color:var(--text);">{{ paso.nombre[:16] }}</div>
+        </div>
+        {% if not loop.last %}
+        <div style="width:20px; height:1px; background:var(--border2); flex-shrink:0; position:relative;">
+          <div style="position:absolute; right:-3px; top:-4px; color:var(--text3); font-size:10px;">›</div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Iniciar instancia -->
+    <form action="/flujos/{{ flujo.id }}/iniciar" method="post" style="display:flex; gap:6px;">
+      <input type="text" name="titulo" class="form-control" placeholder="Nombre de la instancia…" required style="flex:1;">
+      <button type="submit" class="btn btn-primary btn-sm">▶ Iniciar</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+{% if instancias %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Instancias activas</div>
+    <div class="card-subtitle">Flujos en ejecución</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Título</th><th>Flujo</th><th>Paso actual</th><th>Estado</th><th>Iniciado</th></tr>
+      </thead>
+      <tbody>
+        {% for inst in instancias %}
+        <tr>
+          <td style="font-weight:500;">{{ inst.titulo }}</td>
+          <td style="font-size:12px; color:var(--text2);">{{ inst.flujo.nombre if inst.flujo else '—' }}</td>
+          <td><span class="badge badge-blue">Paso {{ inst.paso_actual }}</span></td>
+          <td><span class="badge badge-green">{{ inst.estado }}</span></td>
+          <td style="font-size:12px; color:var(--text3);">{{ inst.fecha_inicio.strftime('%d/%m/%Y %H:%M') if inst.fecha_inicio else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if not flujos %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">⚙️</div>
+    <p>No hay flujos de trabajo configurados.</p>
+    <a href="/flujos/nuevo" class="btn btn-primary" style="margin-top:12px;">Crear primer flujo</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

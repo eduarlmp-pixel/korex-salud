@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% set active_page = "mejora" %}
+{% block title %}Nueva Acción de Mejora — QMS Salud{% endblock %}
+{% block page_title %}Nueva Acción de Mejora{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Nueva acción de mejora</h1>
+    <div class="subtitle">Registre una acción correctiva, preventiva o de mejora</div>
+  </div>
+  <a href="/mejora" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:760px;">
+  <div class="card">
+    <form action="/mejora/nueva" method="post">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Código *</label>
+          <input type="text" name="codigo" class="form-control" placeholder="ACC-001" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo *</label>
+          <select name="tipo" class="form-control">
+            <option value="correctiva">Correctiva</option>
+            <option value="preventiva">Preventiva</option>
+            <option value="mejora">Mejora</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input type="text" name="titulo" class="form-control" placeholder="Descripción breve de la acción" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea name="descripcion" class="form-control" rows="3" placeholder="Detalle de la acción a implementar…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Origen</label>
+          <select name="origen" class="form-control">
+            <option value="auditoria">Auditoría</option>
+            <option value="pqrs">PQRS</option>
+            <option value="indicador">Indicador</option>
+            <option value="riesgo">Riesgo</option>
+            <option value="auto">Autoevaluación</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Proceso</label>
+          <input type="text" name="proceso" class="form-control" placeholder="Urgencias, Farmacia, Calidad…">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Causa raíz</label>
+        <textarea name="causa_raiz" class="form-control" rows="2" placeholder="Análisis de causa raíz (5 por qués, espina de pescado…)"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Responsable *</label>
+          <select name="responsable_id" class="form-control" required>
+            <option value="">Seleccionar…</option>
+            {% for u in usuarios %}
+            <option value="{{ u.id }}">{{ u.nombre }} {{ u.apellido }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha límite</label>
+          <input type="date" name="fecha_limite" class="form-control">
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <a href="/mejora" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">+ Crear acción</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

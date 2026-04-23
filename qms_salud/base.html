@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>{% block title %}QMS Salud{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+<!-- Overlay para cerrar sidebar en móvil -->
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="/static/img/logo.png" alt="Logo" onerror="this.style.display='none'">
+      <div>
+        <div class="logo-text">QMS Salud</div>
+        <div class="logo-sub">Gestión de Calidad</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Principal</div>
+      <a href="/" class="sidebar-item {% if active_page == 'home' %}active{% endif %}" onclick="closeSidebar()">
+        <span class="icon">🏠</span> Inicio
+      </a>
+      <a href="/dashboard" class="sidebar-item {% if active_page == 'dashboard' %}active{% endif %}" onclick="closeSidebar()">
+        <span class="icon">📊</span> Dashboard
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Calidad</div>
+      <a href="/documentos" class="sidebar-item {% if active_page == 'documentos' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">📁</span> Documentos</a>
+      <a href="/auditorias" class="sidebar-item {% if active_page == 'auditorias' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">✅</span> Auditorías</a>
+      <a href="/mejora" class="sidebar-item {% if active_page == 'mejora' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">🔄</span> Mejora continua</a>
+      <a href="/indicadores" class="sidebar-item {% if active_page == 'indicadores' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">📈</span> Indicadores</a>
+      <a href="/riesgos" class="sidebar-item {% if active_page == 'riesgos' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">⚠️</span> Riesgos</a>
+      <a href="/comites" class="sidebar-item {% if active_page == 'comites' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">🏛️</span> Comités</a>
+      <a href="/seguridad-paciente" class="sidebar-item {% if active_page == 'seguridad_paciente' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">🛡️</span> Seguridad paciente</a>
+      <a href="/flujos" class="sidebar-item {% if active_page == 'flujos' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">⚙️</span> Flujos</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Seguridad y ambiente</div>
+      <a href="/sst" class="sidebar-item {% if active_page == 'sst' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">🦺</span> SST</a>
+      <a href="/ambiental" class="sidebar-item {% if active_page == 'ambiental' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">♻️</span> Gestión ambiental</a>
+      <a href="/ambiente-fisico" class="sidebar-item {% if active_page == 'ambiente_fisico' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">🏗️</span> Ambiente físico</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Tecnología</div>
+      <a href="/tecnovigilancia" class="sidebar-item {% if active_page == 'tecnovigilancia' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">🏥</span> Tecnovigilancia</a>
+      <a href="/sistemas" class="sidebar-item {% if active_page == 'sistemas' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">💻</span> Sistemas</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Operaciones</div>
+      <a href="/ambulancias" class="sidebar-item {% if active_page == 'ambulancias' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">🚑</span> Ambulancias</a>
+      <a href="/talento" class="sidebar-item {% if active_page == 'talento' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">👥</span> Talento humano</a>
+      <a href="/pqrs" class="sidebar-item {% if active_page == 'pqrs' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">💬</span> PQRS</a>
+    </div>
+
+    {% if user and user.rol.value == 'admin' %}
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Administración</div>
+      <a href="/usuarios" class="sidebar-item {% if active_page == 'usuarios' %}active{% endif %}" onclick="closeSidebar()"><span class="icon">👤</span> Usuarios</a>
+    </div>
+    {% endif %}
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">{% if user %}{{ user.nombre[0] }}{{ user.apellido[0] }}{% else %}U{% endif %}</div>
+        <div style="min-width:0;">
+          <div class="sidebar-user-name">{{ user.nombre }} {{ user.apellido }}</div>
+          <div class="sidebar-user-role">{{ user.rol.value if user else '' }}</div>
+        </div>
+      </div>
+      <a href="/auth/logout" class="sidebar-item" style="margin-top:4px;color:rgba(255,255,255,0.4);" onclick="closeSidebar()">
+        <span class="icon">🚪</span> Cerrar sesión
+      </a>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="btn-menu" onclick="toggleSidebar()" aria-label="Menú">☰</button>
+      <span class="topbar-title">{% block page_title %}{% endblock %}</span>
+      <div class="topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+    </div>
+    <div class="page">{% block content %}{% endblock %}</div>
+  </div>
+</div>
+
+<script>
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('overlay');
+  s.classList.toggle('open');
+  o.classList.toggle('open');
+  document.body.style.overflow = s.classList.contains('open') ? 'hidden' : '';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+// Cerrar con tecla Escape
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSidebar(); });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% set active_page = "indicadores" %}
+{% block title %}Indicadores — QMS Salud{% endblock %}
+{% block page_title %}Indicadores de Calidad{% endblock %}
+{% set p = permisos.get('indicadores', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/indicadores/nuevo" class="btn btn-primary">+ Nuevo indicador</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Indicadores de calidad asistencial</h1>
+    <div class="subtitle">KPIs y métricas de los procesos del SGC</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px;">
+  {% for item in indicadores %}
+  {% set ind = item.indicador %}
+  {% set ultima = item.ultima %}
+  {% set estado = item.estado %}
+  <div class="card" style="padding:16px;">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px;">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:10px; color:var(--text3); font-family:'DM Mono',monospace; margin-bottom:3px;">{{ ind.codigo }}</div>
+        <div style="font-size:13px; font-weight:600; line-height:1.3;">{{ ind.nombre }}</div>
+        <div style="font-size:11px; color:var(--text3); margin-top:2px;">{{ ind.proceso }} · {{ ind.frecuencia }}</div>
+      </div>
+      <span class="badge {% if estado == 'cumple' %}badge-green{% elif estado == 'alerta' %}badge-red{% else %}badge-gray{% endif %}" style="margin-left:8px; flex-shrink:0;">
+        {% if estado == 'cumple' %}✓ cumple{% elif estado == 'alerta' %}✗ alerta{% else %}sin datos{% endif %}
+      </span>
+    </div>
+
+    {% if ultima %}
+    <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:6px;">
+      <span style="font-size:28px; font-weight:700; font-family:'DM Mono',monospace;
+        color:{% if estado == 'cumple' %}var(--green){% elif estado == 'alerta' %}var(--red){% else %}var(--text2){% endif %};">
+        {{ ultima.valor }}
+      </span>
+      <span style="font-size:13px; color:var(--text3);">{{ ind.unidad }}</span>
+      <span style="font-size:11px; color:var(--text3); margin-left:4px;">{{ ultima.periodo }}</span>
+    </div>
+    {% else %}
+    <div style="font-size:13px; color:var(--text3); margin-bottom:6px;">Sin mediciones aún</div>
+    {% endif %}
+
+    <!-- Sparkline con barras -->
+    {% if item.mediciones %}
+    {% set valores = item.mediciones | map(attribute='valor') | list %}
+    {% set max_v = valores | max %}
+    <div class="mini-chart" style="margin-bottom:8px;">
+      {% for med in item.mediciones %}
+      {% set pct = ((med.valor / max_v) * 100) | int if max_v > 0 else 0 %}
+      <div class="mini-bar {% if ind.meta_minima and ind.meta_maxima and ind.meta_minima <= med.valor <= ind.meta_maxima %}green{% elif ind.meta_maxima and med.valor > ind.meta_maxima %}red{% else %}yellow{% endif %}"
+           style="height:{{ pct }}%;"
+           title="{{ med.periodo }}: {{ med.valor }} {{ ind.unidad }}">
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Meta -->
+    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-bottom:10px;">
+      <span>Meta: <strong style="color:var(--text2);">{{ ind.meta }} {{ ind.unidad }}</strong></span>
+      <span>Rango: {{ ind.meta_minima }} – {{ ind.meta_maxima }}</span>
+    </div>
+
+    <!-- Registrar medición -->
+    <details style="border-top:1px solid var(--border); padding-top:10px;">
+      <summary style="font-size:12px; color:var(--accent); cursor:pointer;">+ Registrar medición</summary>
+      <form action="/indicadores/{{ ind.id }}/medicion" method="post" style="margin-top:10px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Valor *</label>
+            <input type="number" step="0.01" name="valor" class="form-control" required placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Período *</label>
+            <input type="text" name="periodo" class="form-control" required placeholder="2025-01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observación</label>
+          <input type="text" name="observacion" class="form-control" placeholder="Opcional…">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Guardar medición</button>
+      </form>
+    </details>
+  </div>
+  {% endfor %}
+</div>
+
+{% if not indicadores %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">📈</div>
+    <p>No hay indicadores registrados.</p>
+    <a href="/indicadores/nuevo" class="btn btn-primary" style="margin-top:12px;">Crear primer indicador</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

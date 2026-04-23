@@ -1,0 +1,21 @@
+<a href="/talento/capacitaciones/{{ cap.id }}" style="text-decoration:none; display:block; margin-bottom:8px;">
+  <div style="padding:12px 14px; border:1px solid var(--border); border-radius:10px; border-left:4px solid
+    {% if cap.estado == 'realizada' %}var(--green){% elif cap.estado == 'cancelada' %}var(--text3){% else %}var(--accent){% endif %};
+    background:var(--bg2); transition:border-color 0.15s;">
+    <div style="font-size:13px; font-weight:600; color:var(--text);">{{ cap.titulo }}</div>
+    <div style="font-size:11px; color:var(--text3); margin-top:4px; display:flex; gap:10px; flex-wrap:wrap;">
+      {% if cap.tipo %}<span class="badge badge-blue" style="font-size:10px;">{{ cap.tipo }}</span>{% endif %}
+      {% if cap.fecha_programada %}<span>📅 {{ cap.fecha_programada.strftime('%d/%m/%Y') }}</span>{% endif %}
+      {% if cap.duracion_horas %}<span>⏱ {{ cap.duracion_horas|int }}h</span>{% endif %}
+    </div>
+    {% if cap.responsable %}
+    <div style="font-size:11px; color:var(--text2); margin-top:4px;">
+      👤 {{ cap.responsable.nombres }} {{ cap.responsable.apellidos }}
+    </div>
+    {% endif %}
+    <div style="font-size:11px; color:var(--text3); margin-top:4px;">
+      {{ cap.asistentes|length }} participante{{ 's' if cap.asistentes|length != 1 else '' }}
+      {% if cap.lugar %} · 📍 {{ cap.lugar[:30] }}{% endif %}
+    </div>
+  </div>
+</a>

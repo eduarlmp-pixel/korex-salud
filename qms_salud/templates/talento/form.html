@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% set active_page = "talento" %}
+{% block title %}Nuevo Empleado — QMS Salud{% endblock %}
+{% block page_title %}Nuevo Empleado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Registrar empleado</h1><div class="subtitle">Expediente digital del profesional de salud</div></div>
+  <a href="/talento" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:760px;">
+  <div class="card">
+    <form action="/talento/nuevo" method="post">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombres *</label>
+          <input type="text" name="nombres" class="form-control" required placeholder="Nombres">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellidos *</label>
+          <input type="text" name="apellidos" class="form-control" required placeholder="Apellidos">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Número de documento *</label>
+          <input type="text" name="documento" class="form-control" required placeholder="CC / CE / Pasaporte">
+        </div>
+        <div class="form-group">
+          <label class="form-label">RETHUS</label>
+          <input type="text" name="rethus" class="form-control" placeholder="Número RETHUS">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cargo</label>
+          <input type="text" name="cargo" class="form-control" placeholder="Médico, Enfermera, Bacteriólogo…">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Área / servicio</label>
+          <input type="text" name="area" class="form-control" placeholder="Urgencias, UCI, Laboratorio…">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo de contrato</label>
+          <select name="tipo_contrato" class="form-control">
+            <option value="">Seleccionar…</option>
+            <option value="indefinido">Indefinido</option>
+            <option value="fijo">Término fijo</option>
+            <option value="prestacion">Prestación de servicios</option>
+            <option value="obra_labor">Obra o labor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de ingreso</label>
+          <input type="date" name="fecha_ingreso" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" placeholder="empleado@hospital.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input type="text" name="telefono" class="form-control" placeholder="+57 300 000 0000">
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <a href="/talento" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">+ Registrar empleado</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

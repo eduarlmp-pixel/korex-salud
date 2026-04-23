@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% set active_page = "riesgos" %}
+{% block title %}Riesgos — QMS Salud{% endblock %}
+{% block page_title %}Gestión de Riesgos{% endblock %}
+{% set p = permisos.get('riesgos', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/riesgos/nuevo" class="btn btn-primary">+ Nuevo riesgo</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Riesgos y oportunidades</h1>
+    <div class="subtitle">Matriz de riesgos clínicos e institucionales — FMEA</div>
+  </div>
+</div>
+
+<div class="grid-2 mb-6">
+  <!-- Mapa térmico -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Mapa térmico de riesgos</div>
+      <div class="card-subtitle">Probabilidad × Impacto</div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="border-collapse:separate; border-spacing:3px; width:100%;">
+        <thead>
+          <tr>
+            <th style="font-size:10px; color:var(--text3); width:60px; text-align:center; padding:4px;">P ↓ / I →</th>
+            {% for i in range(1,6) %}
+            <th style="font-size:10px; color:var(--text3); text-align:center; padding:4px;">{{ i }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in range(5,0,-1) %}
+          <tr>
+            <td style="font-size:10px; color:var(--text3); text-align:center; padding:4px; font-weight:600;">{{ p }}</td>
+            {% for i in range(1,6) %}
+            {% set cell_riesgos = mapa.get((p,i), []) %}
+            {% set score = p * i %}
+            <td style="
+              width:60px; height:48px; border-radius:6px; text-align:center; vertical-align:middle;
+              background:{% if score >= 15 %}rgba(239,68,68,0.35){% elif score >= 9 %}rgba(249,115,22,0.3){% elif score >= 4 %}rgba(245,158,11,0.25){% else %}rgba(34,197,94,0.2){% endif %};
+              cursor:{% if cell_riesgos %}pointer{% else %}default{% endif %};
+              font-size:{% if cell_riesgos %}16px{% else %}11px{% endif %};
+              font-weight:600;
+              color:{% if score >= 15 %}var(--red){% elif score >= 9 %}var(--orange){% elif score >= 4 %}var(--yellow){% else %}var(--green){% endif %};"
+              title="{{ cell_riesgos|map(attribute='descripcion')|join(', ') if cell_riesgos else '' }}">
+              {{ cell_riesgos|length if cell_riesgos else '' }}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <span style="font-size:11px; color:var(--green);">● Bajo (1-3)</span>
+        <span style="font-size:11px; color:var(--yellow);">● Moderado (4-8)</span>
+        <span style="font-size:11px; color:var(--orange);">● Alto (9-14)</span>
+        <span style="font-size:11px; color:var(--red);">● Crítico (≥15)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen por nivel -->
+  <div class="card">
+    <div class="card-title mb-4">Resumen por nivel</div>
+    {% set niveles = [('critico', 'Crítico', 'red'), ('alto', 'Alto', 'orange'), ('moderado', 'Moderado', 'yellow'), ('bajo', 'Bajo', 'green')] %}
+    {% for nv, label, color in niveles %}
+    {% set count = riesgos | selectattr('nivel.value', 'equalto', nv) | list | length %}
+    <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
+      <div style="width:10px; height:10px; border-radius:50%; background:var(--{{ color }}); flex-shrink:0;"></div>
+      <span style="flex:1; font-size:13px;">{{ label }}</span>
+      <span style="font-size:22px; font-weight:700; font-family:'DM Mono',monospace; color:var(--{{ color }});">{{ count }}</span>
+    </div>
+    {% endfor %}
+    <div style="display:flex; align-items:center; gap:12px; padding:10px 0;">
+      <div style="width:10px; height:10px; border-radius:50%; background:var(--text3); flex-shrink:0;"></div>
+      <span style="flex:1; font-size:13px; font-weight:600;">Total</span>
+      <span style="font-size:22px; font-weight:700; font-family:'DM Mono',monospace;">{{ riesgos|length }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Filtros y tabla -->
+<form method="get" class="filters-bar mb-4">
+  <select name="nivel" class="form-control">
+    <option value="">Todos los niveles</option>
+    <option value="critico" {% if filtro_nivel == 'critico' %}selected{% endif %}>Crítico</option>
+    <option value="alto" {% if filtro_nivel == 'alto' %}selected{% endif %}>Alto</option>
+    <option value="moderado" {% if filtro_nivel == 'moderado' %}selected{% endif %}>Moderado</option>
+    <option value="bajo" {% if filtro_nivel == 'bajo' %}selected{% endif %}>Bajo</option>
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if filtro_nivel %}<a href="/riesgos" class="btn btn-secondary">✕ Limpiar</a>{% endif %}
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    {% if riesgos %}
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th><th>Proceso</th><th>Descripción</th>
+          <th style="text-align:center;">P</th>
+          <th style="text-align:center;">I</th>
+          <th style="text-align:center;">Score</th>
+          <th>Nivel</th>
+          <th>Responsable</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in riesgos %}
+        <tr>
+          <td class="font-mono" style="font-size:11px; color:var(--text3);">{{ r.codigo }}</td>
+          <td style="font-size:12px;">{{ r.proceso }}</td>
+          <td style="max-width:280px; font-size:13px;">{{ r.descripcion[:70] }}{% if r.descripcion|length > 70 %}…{% endif %}</td>
+          <td style="text-align:center; font-weight:600; font-family:'DM Mono',monospace;">{{ r.probabilidad }}</td>
+          <td style="text-align:center; font-weight:600; font-family:'DM Mono',monospace;">{{ r.impacto }}</td>
+          <td style="text-align:center;">
+            <span style="font-size:15px; font-weight:700; font-family:'DM Mono',monospace;
+              color:{% if r.nivel.value == 'critico' %}var(--red){% elif r.nivel.value == 'alto' %}var(--orange){% elif r.nivel.value == 'moderado' %}var(--yellow){% else %}var(--green){% endif %};">
+              {{ r.probabilidad * r.impacto }}
+            </span>
+          </td>
+          <td>
+            <span class="badge
+              {% if r.nivel.value == 'critico' %}badge-red
+              {% elif r.nivel.value == 'alto' %}badge-orange
+              {% elif r.nivel.value == 'moderado' %}badge-yellow
+              {% else %}badge-green{% endif %}">
+              {{ r.nivel.value }}
+            </span>
+          </td>
+          <td style="font-size:12px; color:var(--text2);">
+            {{ r.responsable.nombre + ' ' + r.responsable.apellido if r.responsable else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">⚠️</div>
+      <p>No hay riesgos registrados.</p>
+      <a href="/riesgos/nuevo" class="btn btn-primary" style="margin-top:12px;">Registrar primer riesgo</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% set active_page = "seguridad_paciente" %}
+{% set p = permisos.get('seguridad-paciente', {}) %}
+{% block title %}Seguridad del Paciente — QMS Salud{% endblock %}
+{% block page_title %}Seguridad del Paciente{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Seguridad del paciente</h1><div class="subtitle">Rondas de seguridad, paquetes instruccionales, comités y capacitaciones</div></div>
+  <div style="display:flex;gap:8px;">
+    {% if p.get('puede_crear') %}<a href="/seguridad-paciente/paquete/nuevo" class="btn btn-secondary">+ Paquete instruccional</a>{% endif %}
+    {% if p.get('puede_crear') %}<a href="/seguridad-paciente/ronda/nueva" class="btn btn-primary">+ Nueva ronda de seguridad</a>{% endif %}
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="stats-grid mb-6">
+  <div class="stat-card blue"><div class="label">Rondas realizadas</div><div class="value">{{ total_rondas }}</div></div>
+  <div class="stat-card {% if pct_prom >= 95 %}green{% elif pct_prom >= 85 %}yellow{% else %}red{% endif %}">
+    <div class="label">Promedio cumplimiento</div>
+    <div class="value">{{ pct_prom }}%</div>
+    <div class="sub">{% if pct_prom >= 95 %}Área cumple ✓{% elif pct_prom >= 85 %}Requiere mejorar{% else %}Requiere intensificar{% endif %}</div>
+  </div>
+  <div class="stat-card teal"><div class="label">Paquetes instruccionales</div><div class="value">{{ paquetes|length }}</div></div>
+</div>
+
+<div class="grid-2">
+  <!-- Rondas recientes -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Rondas de seguridad recientes</div><a href="/seguridad-paciente/ronda/nueva" class="btn btn-primary btn-sm">+ Nueva</a></div>
+    {% if rondas %}
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      {% for r in rondas %}
+      <div style="padding:12px;border:1px solid var(--border);border-radius:8px;border-left:4px solid {% if r.porcentaje >= 95 %}var(--green){% elif r.porcentaje >= 85 %}var(--yellow){% else %}var(--red){% endif %};">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">{{ r.servicio }}</div>
+            <div style="font-size:11px;color:var(--text3);">{{ r.evaluador }} · {{ r.fecha.strftime('%d/%m/%Y') if r.fecha else '—' }}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:{% if r.porcentaje >= 95 %}var(--green){% elif r.porcentaje >= 85 %}var(--yellow){% else %}var(--red){% endif %};">{{ r.porcentaje }}%</div>
+            <div style="font-size:10px;color:var(--text3);">{{ r.items_cumple }}/{{ r.total_items }} ítems</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <div class="progress">
+            <div class="progress-bar {% if r.porcentaje >= 95 %}green{% elif r.porcentaje >= 85 %}yellow{% else %}red{% endif %}" style="width:{{ r.porcentaje }}%;"></div>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;">
+          <a href="/seguridad-paciente/ronda/{{ r.id }}/reporte" class="btn btn-secondary btn-sm">📄 Descargar</a>
+          <span class="badge {% if r.firmado %}badge-green{% else %}badge-yellow{% endif %}">{% if r.firmado %}✓ Firmada{% else %}Sin firma{% endif %}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:28px;"><div class="icon">🔍</div><p>Sin rondas registradas.</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Paquetes instruccionales -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Paquetes instruccionales</div><a href="/seguridad-paciente/paquete/nuevo" class="btn btn-secondary btn-sm">+ Nuevo</a></div>
+    {% if paquetes %}
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      {% for p in paquetes %}
+      <div style="padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">{{ p.nombre }}</div>
+            <div style="font-size:11px;color:var(--text3);">{{ p.tipo or '—' }} · v{{ p.version }}</div>
+            {% if p.descripcion %}<div style="font-size:12px;color:var(--text2);margin-top:3px;">{{ p.descripcion[:80] }}{% if p.descripcion|length > 80 %}…{% endif %}</div>{% endif %}
+          </div>
+          <div style="display:flex;gap:4px;flex-shrink:0;margin-left:10px;">
+            {% if p.archivo_ruta %}<a href="/{{ p.archivo_ruta }}" class="btn btn-success btn-sm" target="_blank">📎</a>{% endif %}
+            <span class="badge badge-green">Vigente</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:28px;"><div class="icon">📋</div><p>Sin paquetes instruccionales.</p></div>
+    {% endif %}
+
+    <!-- Accesos rápidos a comités y capacitaciones -->
+    <div class="divider"></div>
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">Accesos rápidos</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <a href="/comites" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;display:flex;align-items:center;gap:10px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:18px;">🏛️</span>
+        <div><div style="font-size:13px;font-weight:600;color:var(--text);">Comités de seguridad</div><div style="font-size:11px;color:var(--text3);">Actas y seguimiento de compromisos</div></div>
+      </a>
+      <a href="/sst/capacitacion/nueva" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;text-decoration:none;display:flex;align-items:center;gap:10px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:18px;">📚</span>
+        <div><div style="font-size:13px;font-weight:600;color:var(--text);">Capacitaciones</div><div style="font-size:11px;color:var(--text3);">Registrar capacitación con evaluación</div></div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

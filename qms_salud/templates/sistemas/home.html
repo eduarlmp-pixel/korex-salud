@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% set active_page = "sistemas" %}
+{% block title %}Sistemas — QMS Salud{% endblock %}
+{% block page_title %}Sistemas{% endblock %}
+{% set p = permisos.get('sistemas', {}) %}
+{% block topbar_actions %}{% if p.get('puede_crear') %}<a href="/sistemas/nuevo-equipo" class="btn btn-primary">+ Nuevo equipo</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Mantenimiento de sistemas</h1><div class="subtitle">Plan preventivo de computadores y equipos de cómputo</div></div></div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Equipos registrados ({{ equipos|length }})</div></div>
+    {% if equipos %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Nombre</th><th>Tipo</th><th>Área</th><th>Usuario</th><th></th></tr></thead>
+      <tbody>{% for eq in equipos %}
+      <tr>
+        <td style="font-weight:600;">{{ eq.nombre }}</td>
+        <td><span class="badge badge-blue">{{ eq.tipo }}</span></td>
+        <td style="font-size:12px;">{{ eq.area or '—' }}</td>
+        <td style="font-size:12px;color:var(--text2);">{{ eq.usuario_asignado or '—' }}</td>
+        <td><a href="/sistemas/equipo/{{ eq.id }}/mantenimiento" class="btn btn-primary btn-sm">+ Mant.</a></td>
+      </tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty-state" style="padding:24px;"><div class="icon">💻</div><p>Sin equipos registrados</p></div>{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Mantenimientos recientes</div></div>
+    {% if mantenimientos %}
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      {% for m in mantenimientos %}
+      <div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">{{ m.equipo.nombre if m.equipo else '—' }}</div>
+            <div style="font-size:11px;color:var(--text3);">{{ m.tecnico }} · {{ m.fecha.strftime('%d/%m/%Y') }}</div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <span class="badge {% if m.firmado_tecnico %}badge-green{% else %}badge-yellow{% endif %}">Técnico: {% if m.firmado_tecnico %}✓{% else %}⏳{% endif %}</span>
+            <span class="badge {% if m.firmado_usuario %}badge-green{% else %}badge-yellow{% endif %}">Usuario: {% if m.firmado_usuario %}✓{% else %}⏳{% endif %}</span>
+          </div>
+        </div>
+        {% if m.firmado_tecnico and m.firmado_usuario %}
+        <a href="/sistemas/mantenimiento/{{ m.id }}/reporte" class="btn btn-success btn-sm" style="margin-top:6px;">📄 Descargar reporte</a>
+        {% elif m.firmado_tecnico %}
+        <a href="/sistemas/mantenimiento/{{ m.id }}/firmar-usuario" class="btn btn-secondary btn-sm" style="margin-top:6px;">✏️ Firma del usuario</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty-state" style="padding:24px;"><div class="icon">🔧</div><p>Sin mantenimientos</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

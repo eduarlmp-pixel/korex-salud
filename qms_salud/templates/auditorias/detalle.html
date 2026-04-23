@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% set active_page = "auditorias" %}
+{% block title %}{{ auditoria.titulo }} — QMS Salud{% endblock %}
+{% block page_title %}Detalle de Auditoría{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <h1>{{ auditoria.titulo }}</h1>
+      <span class="badge {% if auditoria.estado.value == 'cerrada' %}badge-green{% elif auditoria.estado.value == 'en_curso' %}badge-yellow{% elif auditoria.estado.value == 'planificada' %}badge-blue{% else %}badge-gray{% endif %}">
+        {{ auditoria.estado.value }}
+      </span>
+    </div>
+    <div class="subtitle">{{ auditoria.codigo }} · {{ auditoria.proceso_auditado }}</div>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <form action="/auditorias/{{ auditoria.id }}/cambiar-estado" method="post" style="display:flex; gap:6px;">
+      <select name="estado" class="form-control" style="width:auto;">
+        <option value="planificada" {% if auditoria.estado.value == 'planificada' %}selected{% endif %}>Planificada</option>
+        <option value="en_curso" {% if auditoria.estado.value == 'en_curso' %}selected{% endif %}>En curso</option>
+        <option value="cerrada" {% if auditoria.estado.value == 'cerrada' %}selected{% endif %}>Cerrada</option>
+        <option value="cancelada" {% if auditoria.estado.value == 'cancelada' %}selected{% endif %}>Cancelada</option>
+      </select>
+      <button type="submit" class="btn btn-secondary btn-sm">Cambiar estado</button>
+    </form>
+    <a href="/auditorias" class="btn btn-secondary">← Volver</a>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div>
+    <!-- Info general -->
+    <div class="card mb-4">
+      <div class="detail-section-title">Información general</div>
+      <div class="form-row">
+        <div class="detail-field">
+          <div class="field-label">Líder auditor</div>
+          <div class="field-value">{{ auditoria.lider.nombre + ' ' + auditoria.lider.apellido if auditoria.lider else '—' }}</div>
+        </div>
+        <div class="detail-field">
+          <div class="field-label">Tipo</div>
+          <div class="field-value"><span class="badge badge-gray">{{ auditoria.tipo or '—' }}</span></div>
+        </div>
+        <div class="detail-field">
+          <div class="field-label">Norma de referencia</div>
+          <div class="field-value">{{ auditoria.norma_referencia or '—' }}</div>
+        </div>
+        <div class="detail-field">
+          <div class="field-label">Período</div>
+          <div class="field-value" style="font-size:12px;">
+            {{ auditoria.fecha_inicio.strftime('%d/%m/%Y') if auditoria.fecha_inicio else '—' }}
+            {% if auditoria.fecha_fin %} → {{ auditoria.fecha_fin.strftime('%d/%m/%Y') }}{% endif %}
+          </div>
+        </div>
+      </div>
+      {% if auditoria.objetivo %}
+      <div class="detail-field"><div class="field-label">Objetivo</div><div class="field-value" style="color:var(--text2);">{{ auditoria.objetivo }}</div></div>
+      {% endif %}
+      {% if auditoria.alcance %}
+      <div class="detail-field"><div class="field-label">Alcance</div><div class="field-value" style="color:var(--text2);">{{ auditoria.alcance }}</div></div>
+      {% endif %}
+    </div>
+
+    <!-- Hallazgos -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <div class="card-title">Hallazgos ({{ hallazgos|length }})</div>
+      </div>
+      {% if hallazgos %}
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+        {% for h in hallazgos %}
+        <div style="padding:12px; background:var(--bg3); border-radius:var(--radius-sm); border-left:3px solid {% if h.tipo == 'no_conformidad' %}var(--red){% elif h.tipo == 'observacion' %}var(--yellow){% else %}var(--accent){% endif %};">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
+            <span class="badge {% if h.tipo == 'no_conformidad' %}badge-red{% elif h.tipo == 'observacion' %}badge-yellow{% else %}badge-blue{% endif %}">
+              {{ h.tipo }}
+            </span>
+            <span class="badge {% if h.estado.value == 'completada' %}badge-green{% elif h.estado.value == 'en_proceso' %}badge-yellow{% else %}badge-gray{% endif %}">
+              {{ h.estado.value }}
+            </span>
+            {% if h.proceso %}<span style="font-size:11px; color:var(--text3);">{{ h.proceso }}</span>{% endif %}
+          </div>
+          <div style="font-size:13px;">{{ h.descripcion }}</div>
+          {% if h.criterio %}<div style="font-size:11px; color:var(--text3); margin-top:4px;">Criterio: {{ h.criterio }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="font-size:13px; color:var(--text3); padding:12px 0 8px;">No hay hallazgos registrados aún.</div>
+      {% endif %}
+
+      <!-- Agregar hallazgo -->
+      <div class="divider"></div>
+      <div style="font-size:12px; font-weight:600; color:var(--text2); margin-bottom:10px;">Agregar hallazgo</div>
+      <form action="/auditorias/{{ auditoria.id }}/hallazgo" method="post">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <select name="tipo" class="form-control">
+              <option value="no_conformidad">No conformidad</option>
+              <option value="observacion">Observación</option>
+              <option value="oportunidad">Oportunidad de mejora</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Proceso</label>
+            <input type="text" name="proceso" class="form-control" placeholder="Área / proceso">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción del hallazgo *</label>
+          <textarea name="descripcion" class="form-control" rows="2" required placeholder="Describa el hallazgo encontrado…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Criterio</label>
+          <input type="text" name="criterio" class="form-control" placeholder="Cláusula o estándar incumplido">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">+ Agregar hallazgo</button>
+      </form>
+    </div>
+  </div>
+
+  <div>
+    <!-- Resumen hallazgos -->
+    <div class="card mb-4">
+      <div class="detail-section-title">Resumen de hallazgos</div>
+      {% set nc = hallazgos | selectattr('tipo', 'equalto', 'no_conformidad') | list | length %}
+      {% set obs = hallazgos | selectattr('tipo', 'equalto', 'observacion') | list | length %}
+      {% set opm = hallazgos | selectattr('tipo', 'equalto', 'oportunidad') | list | length %}
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--red-bg); border-radius:var(--radius-sm);">
+          <span style="font-size:13px; color:var(--red);">No conformidades</span>
+          <span style="font-size:20px; font-weight:700; color:var(--red); font-family:'DM Mono',monospace;">{{ nc }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--yellow-bg); border-radius:var(--radius-sm);">
+          <span style="font-size:13px; color:var(--yellow);">Observaciones</span>
+          <span style="font-size:20px; font-weight:700; color:var(--yellow); font-family:'DM Mono',monospace;">{{ obs }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:var(--accent-glow); border-radius:var(--radius-sm);">
+          <span style="font-size:13px; color:var(--accent);">Oportunidades</span>
+          <span style="font-size:20px; font-weight:700; color:var(--accent); font-family:'DM Mono',monospace;">{{ opm }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checklist -->
+    {% if checklists %}
+    <div class="card">
+      <div class="detail-section-title">Checklist ({{ checklists|length }})</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        {% for item in checklists %}
+        <div style="display:flex; align-items:flex-start; gap:8px; font-size:12px; padding:6px 0; border-bottom:1px solid var(--border);">
+          <span style="color:{% if item.respuesta == 'si' %}var(--green){% elif item.respuesta == 'no' %}var(--red){% elif item.respuesta == 'parcial' %}var(--yellow){% else %}var(--text3){% endif %}; font-size:14px;">
+            {% if item.respuesta == 'si' %}✓{% elif item.respuesta == 'no' %}✗{% elif item.respuesta == 'parcial' %}◐{% else %}—{% endif %}
+          </span>
+          <span style="color:var(--text2);">{{ item.pregunta }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

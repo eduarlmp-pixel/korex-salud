@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% set active_page = "talento" %}
+{% set p = permisos.get('talento', {}) %}
+{% block title %}Vencimientos de Cursos — QMS Salud{% endblock %}
+{% block page_title %}Talento Humano{% endblock %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}
+  <a href="/talento/plantilla-cursos" class="btn btn-secondary">⬇ Plantilla CSV cursos</a>
+  {% endif %}
+  <a href="/talento" class="btn btn-secondary">← Volver</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Vencimientos de cursos</h1>
+    <div class="subtitle">Control de certificaciones y cursos del personal asistencial</div>
+  </div>
+</div>
+
+{% if request.query_params.get('importados') %}
+<div class="alert alert-success mb-4">
+  ✅ {{ request.query_params.get('importados') }} curso(s) importado(s).
+  {% if request.query_params.get('errores') and request.query_params.get('errores') != '0' %}
+  {{ request.query_params.get('errores') }} fila(s) con error (documento no encontrado o fecha inválida).
+  {% endif %}
+</div>
+{% endif %}
+
+{% if p.get('puede_crear') %}
+<div class="card mb-4" style="padding:14px;">
+  <div style="font-size:12px; font-weight:600; color:var(--text2); margin-bottom:10px;">Carga masiva de cursos</div>
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <a href="/talento/plantilla-cursos" class="btn btn-secondary btn-sm">⬇ Plantilla .xlsx</a>
+    <form action="/talento/importar-cursos" method="post" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center;">
+      <input type="file" name="archivo" accept=".csv,.xls,.xlsx" class="form-control" style="width:auto; font-size:12px;">
+      <button type="submit" class="btn btn-primary btn-sm">📤 Importar</button>
+    </form>
+  </div>
+  <div style="font-size:11px; color:var(--text3); margin-top:8px;">
+    Columnas requeridas: <span class="font-mono">documento, nombre_curso, fecha_vencimiento</span> — opcionales: categoria, fecha_realizacion, institucion, observacion
+  </div>
+</div>
+{% endif %}
+
+<form method="get" class="filters-bar mb-4">
+  <select name="area" class="form-control">
+    <option value="">Todas las áreas</option>
+    {% for a in areas %}
+    <option value="{{ a }}" {% if area == a %}selected{% endif %}>{{ a }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if area %}<a href="/talento/vencimientos" class="btn btn-secondary">✕ Limpiar</a>{% endif %}
+</form>
+
+<!-- KPIs -->
+<div class="stats-grid mb-6">
+  <div class="stat-card red">
+    <div class="label">Vencidos</div>
+    <div class="value">{{ vencidos|length }}</div>
+    <div class="sub">Requieren renovación urgente</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="label">Próximos 30 días</div>
+    <div class="value">{{ proximos|length }}</div>
+    <div class="sub">Alerta inmediata</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="label">Próximos 60 días</div>
+    <div class="value">{{ atencion|length }}</div>
+    <div class="sub">Planificar renovación</div>
+  </div>
+  <div class="stat-card green">
+    <div class="label">Vigentes</div>
+    <div class="value">{{ vigentes|length }}</div>
+    <div class="sub">Sin alerta</div>
+  </div>
+</div>
+
+{% macro tabla_vencimientos(items, titulo, color) %}
+{% if items %}
+<div class="card mb-4">
+  <div class="card-header">
+    <div class="card-title" style="color:{{ color }};">{{ titulo }} ({{ items|length }})</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th>Área</th>
+          <th>Cargo</th>
+          <th>Curso</th>
+          <th>Categoría</th>
+          <th>Institución</th>
+          <th>Realización</th>
+          <th>Vencimiento</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for vc in items %}
+        {% set dias = ((vc.fecha_vencimiento - hoy).days) %}
+        <tr>
+          <td>
+            <a href="/talento/{{ vc.empleado.id }}" style="color:var(--text); font-weight:500;">
+              {{ vc.empleado.nombres }} {{ vc.empleado.apellidos }}
+            </a>
+          </td>
+          <td style="font-size:12px; color:var(--text3);">{{ vc.empleado.area or '—' }}</td>
+          <td style="font-size:12px; color:var(--text2);">{{ vc.empleado.cargo or '—' }}</td>
+          <td style="font-size:13px; font-weight:500;">{{ vc.nombre_curso }}</td>
+          <td>{% if vc.categoria %}<span class="badge badge-gray">{{ vc.categoria }}</span>{% else %}—{% endif %}</td>
+          <td style="font-size:12px; color:var(--text2);">{{ vc.institucion or '—' }}</td>
+          <td style="font-size:12px; color:var(--text3);">{{ vc.fecha_realizacion.strftime('%d/%m/%Y') if vc.fecha_realizacion else '—' }}</td>
+          <td style="font-size:12px; white-space:nowrap;">{{ vc.fecha_vencimiento.strftime('%d/%m/%Y') }}</td>
+          <td>
+            <span class="badge {% if dias < 0 %}badge-red{% elif dias <= 30 %}badge-yellow{% else %}badge-blue{% endif %}">
+              {% if dias < 0 %}Vencido{% elif dias == 0 %}Hoy{% else %}{{ dias }}d{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{{ tabla_vencimientos(vencidos, "🔴 Vencidos — requieren renovación urgente", "var(--red)") }}
+{{ tabla_vencimientos(proximos, "🟡 Vencen en los próximos 30 días", "var(--yellow)") }}
+{{ tabla_vencimientos(atencion, "🔵 Vencen en los próximos 60 días", "var(--accent)") }}
+{{ tabla_vencimientos(vigentes, "🟢 Vigentes", "var(--green)") }}
+
+{% if not vencidos and not proximos and not atencion and not vigentes %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">📋</div>
+    <p>No hay cursos registrados con vencimiento.</p>
+    <p style="font-size:12px; color:var(--text3);">Ingrese al expediente de un empleado para agregar cursos, o use la carga masiva.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

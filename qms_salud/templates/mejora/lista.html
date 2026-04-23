@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% set active_page = "mejora" %}
+{% block title %}Mejora Continua — QMS Salud{% endblock %}
+{% block page_title %}Mejora Continua{% endblock %}
+{% set p = permisos.get('mejora', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/mejora/nueva" class="btn btn-primary">+ Nueva acción</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Plan de mejora continua</h1>
+    <div class="subtitle">Acciones correctivas, preventivas y de mejora — PAMEC</div>
+  </div>
+</div>
+
+<form method="get" class="filters-bar mb-4">
+  <select name="estado" class="form-control">
+    <option value="">Todos los estados</option>
+    <option value="pendiente" {% if filtros.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+    <option value="en_proceso" {% if filtros.estado == 'en_proceso' %}selected{% endif %}>En proceso</option>
+    <option value="completada" {% if filtros.estado == 'completada' %}selected{% endif %}>Completada</option>
+    <option value="vencida" {% if filtros.estado == 'vencida' %}selected{% endif %}>Vencida</option>
+  </select>
+  <select name="tipo" class="form-control">
+    <option value="">Todos los tipos</option>
+    <option value="correctiva" {% if filtros.tipo == 'correctiva' %}selected{% endif %}>Correctiva</option>
+    <option value="preventiva" {% if filtros.tipo == 'preventiva' %}selected{% endif %}>Preventiva</option>
+    <option value="mejora" {% if filtros.tipo == 'mejora' %}selected{% endif %}>Mejora</option>
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if filtros.estado or filtros.tipo %}<a href="/mejora" class="btn btn-secondary">✕ Limpiar</a>{% endif %}
+</form>
+
+{% if acciones %}
+<div style="display:flex; flex-direction:column; gap:8px;">
+  {% for acc in acciones %}
+  <div class="card" style="padding:14px;">
+    <div style="display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+      <!-- Icono estado -->
+      <div style="width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+        background:{% if acc.estado.value == 'completada' %}var(--green-bg){% elif acc.estado.value == 'en_proceso' %}var(--accent-glow){% elif acc.estado.value == 'vencida' %}var(--red-bg){% else %}var(--bg4){% endif %};">
+        {% if acc.estado.value == 'completada' %}✅
+        {% elif acc.estado.value == 'en_proceso' %}🔄
+        {% elif acc.estado.value == 'vencida' %}⏰
+        {% else %}⏳{% endif %}
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px;">
+          <span class="font-mono" style="font-size:11px; color:var(--text3);">{{ acc.codigo }}</span>
+          <span class="badge {% if acc.tipo == 'correctiva' %}badge-red{% elif acc.tipo == 'preventiva' %}badge-yellow{% else %}badge-blue{% endif %}">{{ acc.tipo }}</span>
+          <span class="badge badge-gray">{{ acc.origen }}</span>
+        </div>
+        <div style="font-size:14px; font-weight:500; margin-bottom:4px;">{{ acc.titulo }}</div>
+        <div style="font-size:12px; color:var(--text3);">
+          👤 {{ acc.responsable.nombre + ' ' + acc.responsable.apellido if acc.responsable else '—' }}
+          · 📋 {{ acc.proceso or 'Sin proceso' }}
+          {% if acc.fecha_limite %}· 📅 Límite: {{ acc.fecha_limite.strftime('%d/%m/%Y') }}{% endif %}
+        </div>
+        <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+          <div class="progress" style="flex:1;">
+            <div class="progress-bar {% if acc.porcentaje_avance == 100 %}green{% elif acc.porcentaje_avance > 60 %}blue{% elif acc.porcentaje_avance > 30 %}yellow{% else %}red{% endif %}"
+                 style="width:{{ acc.porcentaje_avance }}%"></div>
+          </div>
+          <span style="font-size:12px; font-weight:600; color:var(--text2); min-width:32px; text-align:right; font-family:'DM Mono',monospace;">{{ acc.porcentaje_avance }}%</span>
+        </div>
+      </div>
+      <div style="flex-shrink:0;">
+        <button onclick="toggleAvance({{ acc.id }})" class="btn btn-secondary btn-sm">Actualizar</button>
+      </div>
+    </div>
+    <!-- Panel actualizar avance (oculto) -->
+    <div id="avance-{{ acc.id }}" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+      <form action="/mejora/{{ acc.id }}/avance" method="post">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Porcentaje de avance</label>
+            <input type="range" name="porcentaje_avance" min="0" max="100" value="{{ acc.porcentaje_avance }}"
+                   class="form-control" style="padding:4px;" oninput="document.getElementById('pct-{{ acc.id }}').textContent=this.value+'%'">
+            <span id="pct-{{ acc.id }}" style="font-size:12px; color:var(--text2);">{{ acc.porcentaje_avance }}%</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select name="estado" class="form-control">
+              <option value="pendiente" {% if acc.estado.value == 'pendiente' %}selected{% endif %}>Pendiente</option>
+              <option value="en_proceso" {% if acc.estado.value == 'en_proceso' %}selected{% endif %}>En proceso</option>
+              <option value="completada" {% if acc.estado.value == 'completada' %}selected{% endif %}>Completada</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button type="submit" class="btn btn-primary btn-sm">💾 Guardar</button>
+          <button type="button" onclick="toggleAvance({{ acc.id }})" class="btn btn-secondary btn-sm">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">🔄</div>
+    <p>No hay acciones de mejora registradas.</p>
+    <a href="/mejora/nueva" class="btn btn-primary" style="margin-top:12px;">Crear primera acción</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleAvance(id) {
+  const el = document.getElementById('avance-' + id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

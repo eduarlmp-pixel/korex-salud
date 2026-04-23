@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% set active_page = "talento" %}
+{% block title %}Nueva Capacitación — QMS Salud{% endblock %}
+{% block page_title %}Talento Humano{% endblock %}
+{% block topbar_actions %}
+  <a href="/talento/capacitaciones" class="btn btn-secondary">← Volver</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Nueva capacitación</h1><div class="subtitle">Programa una capacitación y asigna un responsable</div></div>
+</div>
+
+<div class="card" style="max-width:680px;">
+  <form action="/talento/capacitaciones/nueva" method="post">
+    <div class="form-group">
+      <label class="form-label">Título de la capacitación *</label>
+      <input type="text" name="titulo" class="form-control" required placeholder="Ej: Reanimación Cardiopulmonar BLS 2025">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select name="tipo" class="form-control">
+          <option value="">— Seleccione —</option>
+          <option>SST</option>
+          <option>Calidad</option>
+          <option>Obligatoria</option>
+          <option>Técnica</option>
+          <option>Humanización</option>
+          <option>Emergencias</option>
+          <option>Farmacología</option>
+          <option>Otra</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Modalidad</label>
+        <select name="modalidad" class="form-control">
+          <option value="presencial">Presencial</option>
+          <option value="virtual">Virtual</option>
+          <option value="mixta">Mixta</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha programada</label>
+        <input type="datetime-local" name="fecha_programada" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duración (horas)</label>
+        <input type="number" step="0.5" min="0" name="duracion_horas" class="form-control" placeholder="8">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Lugar / Plataforma</label>
+      <input type="text" name="lugar" class="form-control" placeholder="Auditorio principal / Zoom / Meet">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Capacitador / Instructor *</label>
+        <input type="text" name="capacitador" class="form-control" required placeholder="Nombre del instructor o entidad">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Institución / Entidad capacitadora</label>
+        <input type="text" name="institucion_cap" class="form-control" placeholder="Cruz Roja, ARL, Interna…">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Responsable interno de la capacitación</label>
+      <select name="responsable_id" class="form-control">
+        <option value="">— Sin asignar —</option>
+        {% for emp in empleados %}
+        <option value="{{ emp.id }}">{{ emp.apellidos }}, {{ emp.nombres }} — {{ emp.cargo or emp.area or '' }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción / Objetivo</label>
+      <textarea name="descripcion" class="form-control" rows="3" placeholder="Objetivo de la capacitación, temas a tratar…"></textarea>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button type="submit" class="btn btn-primary">Crear capacitación</button>
+      <a href="/talento/capacitaciones" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

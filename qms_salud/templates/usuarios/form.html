@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set active_page = "usuarios" %}
+{% block title %}{% if u %}Editar usuario{% else %}Nuevo usuario{% endif %} — QMS Salud{% endblock %}
+{% block page_title %}{% if u %}Editar usuario{% else %}Nuevo usuario{% endif %}{% endblock %}
+{% block topbar_actions %}
+  <a href="/usuarios" class="btn btn-secondary">← Volver</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:560px;">
+  <div class="card-header">
+    <div class="card-title">{% if u %}Editar: {{ u.nombre }} {{ u.apellido }}{% else %}Crear nuevo usuario{% endif %}</div>
+  </div>
+  <div style="padding:24px;">
+    {% if error %}
+    <div class="alert alert-danger" style="margin-bottom:16px;">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{% if u %}/usuarios/{{ u.id }}/editar{% else %}/usuarios/nuevo{% endif %}">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre *</label>
+          <input type="text" name="nombre" class="form-control" value="{{ u.nombre if u else '' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido *</label>
+          <input type="text" name="apellido" class="form-control" value="{{ u.apellido if u else '' }}" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Correo electrónico *</label>
+        <input type="email" name="email" class="form-control" value="{{ u.email if u else '' }}" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contraseña {% if u %}<span style="color:var(--text3);font-weight:400;">(dejar en blanco para no cambiar)</span>{% else %}*{% endif %}</label>
+        <input type="password" name="password" class="form-control" {% if not u %}required{% endif %} placeholder="{% if u %}Nueva contraseña (opcional){% else %}Contraseña{% endif %}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Rol *</label>
+        <select name="rol" class="form-control" required>
+          {% for r in roles %}
+          <option value="{{ r.value }}" {% if u and u.rol == r %}selected{% endif %}>{{ r.value|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cargo</label>
+          <input type="text" name="cargo" class="form-control" value="{{ u.cargo if u and u.cargo else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Área</label>
+          <input type="text" name="area" class="form-control" value="{{ u.area if u and u.area else '' }}">
+        </div>
+      </div>
+
+      {% if u %}
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" name="activo" id="activo" {% if u.activo %}checked{% endif %} style="width:16px;height:16px;">
+        <label for="activo" class="form-label" style="margin:0;cursor:pointer;">Usuario activo</label>
+      </div>
+      {% endif %}
+
+      <div style="display:flex;gap:10px;margin-top:24px;">
+        <button type="submit" class="btn btn-primary">{% if u %}Guardar cambios{% else %}Crear usuario{% endif %}</button>
+        <a href="/usuarios" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

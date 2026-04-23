@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% set active_page = "usuarios" %}
+{% block title %}Usuarios — QMS Salud{% endblock %}
+{% block page_title %}Gestión de usuarios{% endblock %}
+{% block topbar_actions %}
+  <a href="/usuarios/nuevo" class="btn btn-primary">+ Nuevo usuario</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Usuarios del sistema</div>
+    <div style="font-size:13px;color:var(--text3);">{{ usuarios|length }} usuario(s) registrado(s)</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th>Cargo / Área</th>
+          <th>Último acceso</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">
+                {{ u.nombre[0] }}{{ u.apellido[0] }}
+              </div>
+              <div>
+                <div style="font-weight:600;">{{ u.nombre }} {{ u.apellido }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--text2);font-size:13px;">{{ u.email }}</td>
+          <td>
+            {% if u.rol.value == 'admin' %}<span class="badge badge-red">Admin</span>
+            {% elif u.rol.value == 'calidad' %}<span class="badge badge-blue">Calidad</span>
+            {% elif u.rol.value == 'auditor' %}<span class="badge badge-purple">Auditor</span>
+            {% elif u.rol.value == 'gestor' %}<span class="badge badge-teal">Gestor</span>
+            {% else %}<span class="badge badge-gray">Consultor</span>{% endif %}
+          </td>
+          <td style="font-size:13px;color:var(--text2);">
+            {% if u.cargo %}{{ u.cargo }}{% endif %}
+            {% if u.cargo and u.area %} · {% endif %}
+            {% if u.area %}{{ u.area }}{% endif %}
+            {% if not u.cargo and not u.area %}—{% endif %}
+          </td>
+          <td style="font-size:13px;color:var(--text3);">
+            {% if u.ultimo_acceso %}{{ u.ultimo_acceso.strftime('%d/%m/%Y %H:%M') }}{% else %}Nunca{% endif %}
+          </td>
+          <td>
+            {% if u.activo %}<span class="badge badge-green">Activo</span>{% else %}<span class="badge badge-gray">Inactivo</span>{% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <a href="/usuarios/{{ u.id }}/editar" class="btn btn-secondary btn-sm">Editar</a>
+              {% if u.rol.value != 'admin' %}
+              <a href="/usuarios/{{ u.id }}/permisos" class="btn btn-secondary btn-sm">Permisos</a>
+              {% endif %}
+              {% if u.id != user.id %}
+              <form method="post" action="/usuarios/{{ u.id }}/eliminar" style="display:inline;" onsubmit="return confirm('¿Eliminar a {{ u.nombre }} {{ u.apellido }}? Esta acción no se puede deshacer.')">
+                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-state">No hay usuarios registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

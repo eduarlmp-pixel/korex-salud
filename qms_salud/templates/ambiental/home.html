@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% set active_page = "ambiental" %}
+{% set p = permisos.get('ambiental', {}) %}
+{% block title %}Gestión Ambiental — QMS Salud{% endblock %}
+{% block page_title %}Gestión Ambiental{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Gestión Ambiental</h1><div class="subtitle">Registro de residuos, capacitaciones y certificados</div></div>
+  <div style="display:flex;gap:8px;">
+    {% if p.get('puede_crear') %}<a href="/ambiental/nuevo-registro" class="btn btn-secondary">+ Registro residuos</a>{% endif %}
+    {% if p.get('puede_crear') %}<a href="/ambiental/certificado" class="btn btn-primary">📄 Generar certificado</a>{% endif %}
+  </div>
+</div>
+
+<!-- Totales por tipo -->
+<div class="stats-grid mb-6">
+  {% for tipo, info in totales.items() %}
+  <div class="stat-card" style="border-left:3px solid {{ info.color }};">
+    <div class="label">{{ info.label }}</div>
+    <div class="value" style="color:{{ info.color }};">{{ info.total }}</div>
+    <div class="sub">kg registrados</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Últimos registros de residuos</div></div>
+    {% if registros %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tipo</th><th>Subtipo</th><th>Peso</th><th>Mes</th><th>Manifiesto</th></tr></thead>
+      <tbody>
+        {% for r in registros %}
+        {% set info = tipos_labels.get(r.tipo.value, (r.tipo.value,'#888')) %}
+        <tr>
+          <td><span class="badge" style="background:{{ info[1] }}22; color:{{ info[1] }};">{{ info[0] }}</span></td>
+          <td style="font-size:12px;">{{ r.subtipo or '—' }}</td>
+          <td class="font-mono" style="font-weight:700;">{{ r.peso_kg }} kg</td>
+          <td style="font-size:12px;color:var(--text3);">{{ r.mes or '—' }}</td>
+          <td style="font-size:11px;color:var(--text3);">{{ r.numero_manifiesto or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="empty-state" style="padding:24px;"><div class="icon">♻️</div><p>Sin registros de residuos</p></div>{% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Capacitaciones ambientales</div><a href="/sst/capacitacion/nueva" class="btn btn-secondary btn-sm">+ Nueva</a></div>
+    {% if caps %}
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      {% for cap in caps %}
+      <a href="/sst/capacitacion/{{ cap.id }}" style="text-decoration:none;">
+        <div style="padding:9px 12px;border:1px solid var(--border);border-radius:7px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:13px;font-weight:600;color:var(--text);">{{ cap.tema }}</div>
+          <div style="font-size:11px;color:var(--text3);">{{ cap.fecha.strftime('%d/%m/%Y') if cap.fecha else '—' }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}<div style="color:var(--text3);font-size:13px;">Sin capacitaciones ambientales.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

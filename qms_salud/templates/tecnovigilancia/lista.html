@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set active_page = "tecnovigilancia" %}
+{% block title %}Tecnovigilancia — QMS Salud{% endblock %}
+{% block page_title %}Tecnovigilancia{% endblock %}
+{% set p = permisos.get('tecnovigilancia', {}) %}
+{% block topbar_actions %}<a href="/tecnovigilancia/scanner" class="btn btn-secondary">📱 Escanear QR</a>{% if p.get('puede_crear') %}<a href="/tecnovigilancia/nuevo-equipo" class="btn btn-primary">+ Nuevo equipo</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Equipos biomédicos</h1><div class="subtitle">Escanea el QR del equipo para diligenciar el mantenimiento</div></div></div>
+{% if equipos %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
+  {% for eq in equipos %}
+  <div class="card" style="padding:16px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);">{{ eq.nombre }}</div>
+        <div style="font-size:11px;color:var(--text3);">{{ eq.marca }} {{ eq.modelo }} · {{ eq.area }}</div>
+      </div>
+      <span class="badge {% if eq.estado == 'operativo' %}badge-green{% elif eq.estado == 'mantenimiento' %}badge-yellow{% else %}badge-red{% endif %}">{{ eq.estado }}</span>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+      📍 {{ eq.ubicacion or '—' }} · 🔖 {{ eq.codigo_qr }}
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">{{ eq.mantenimientos|length }} mantenimiento(s) registrado(s)</div>
+    <div style="display:flex;gap:6px;">
+      <a href="/tecnovigilancia/equipo-id/{{ eq.id }}" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;">Ver / QR</a>
+      <a href="/tecnovigilancia/equipo-id/{{ eq.id }}/mantenimiento" class="btn btn-primary btn-sm">+ Mant.</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><div class="icon">🏥</div><p>No hay equipos biomédicos registrados.</p><a href="/tecnovigilancia/nuevo-equipo" class="btn btn-primary" style="margin-top:14px;">Registrar primer equipo</a></div></div>
+{% endif %}
+{% endblock %}

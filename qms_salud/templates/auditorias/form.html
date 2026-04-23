@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% set active_page = "auditorias" %}
+{% block title %}Nueva Auditoría — QMS Salud{% endblock %}
+{% block page_title %}Nueva Auditoría{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ 'Editar auditoría' if auditoria else 'Nueva auditoría' }}</h1>
+    <div class="subtitle">Registre el plan de auditoría para el SGC</div>
+  </div>
+  <a href="/auditorias" class="btn btn-secondary">← Volver</a>
+</div>
+
+<div style="max-width: 760px;">
+  <div class="card">
+    <form action="/auditorias/nueva" method="post">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Código *</label>
+          <input type="text" name="codigo" class="form-control" placeholder="AUD-2025-001" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select name="tipo" class="form-control">
+            <option value="interna">Interna</option>
+            <option value="externa">Externa</option>
+            <option value="seguimiento">Seguimiento</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input type="text" name="titulo" class="form-control" placeholder="Ej: Auditoría interna ISO 9001 - Urgencias" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Proceso auditado *</label>
+          <input type="text" name="proceso_auditado" class="form-control" placeholder="Urgencias, UCI, Hospitalización…" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Líder auditor *</label>
+          <select name="lider_id" class="form-control" required>
+            <option value="">Seleccionar…</option>
+            {% for u in usuarios %}
+            <option value="{{ u.id }}">{{ u.nombre }} {{ u.apellido }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Norma / referencia</label>
+        <input type="text" name="norma_referencia" class="form-control" placeholder="ISO 9001:2015, Res. 3100/2019, Joint Commission…">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha inicio</label>
+          <input type="datetime-local" name="fecha_inicio" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha fin</label>
+          <input type="datetime-local" name="fecha_fin" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Objetivo</label>
+        <textarea name="objetivo" class="form-control" rows="2" placeholder="Objetivo de la auditoría…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Alcance</label>
+        <textarea name="alcance" class="form-control" rows="2" placeholder="Alcance de la auditoría…"></textarea>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <a href="/auditorias" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">+ Crear auditoría</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set active_page = "comites" %}
+{% block title %}Nueva Acta — {{ comite.nombre }}{% endblock %}
+{% block page_title %}Nueva Acta{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Nueva acta</h1><div class="subtitle">{{ label }} · {{ comite.nombre }}</div></div>
+  <a href="/comites/{{ comite.id }}" class="btn btn-secondary">← Volver</a>
+</div>
+<form action="/comites/{{ comite.id }}/nueva-acta" method="post" enctype="multipart/form-data">
+  <!-- 1. INFO GENERAL -->
+  <div class="card mb-4">
+    <div class="detail-section-title">1. Información general del comité</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Número de acta *</label><input type="text" name="numero_acta" class="form-control" required placeholder="001-2025"></div>
+      <div class="form-group"><label class="form-label">Fecha de reunión *</label><input type="datetime-local" name="fecha" class="form-control" required></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Proceso que lidera el comité</label><input type="text" name="proceso_lidera" class="form-control" placeholder="Gerencia de Talento Humano…"></div>
+      <div class="form-group"><label class="form-label">Estándares SUA relacionados</label><input type="text" name="estandares_sua" class="form-control" placeholder="Eje. Gerencia..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Período al que corresponde</label><input type="text" name="periodo" class="form-control" placeholder="IV Trimestre 2025"></div>
+      <div class="form-group"><label class="form-label">Lugar</label><input type="text" name="lugar" class="form-control" placeholder="Virtual, Sala de juntas…"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Hora de inicio</label><input type="time" name="hora_inicio" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Hora de fin</label><input type="time" name="hora_fin" class="form-control"></div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+        <input type="checkbox" name="quorum" style="width:16px;height:16px;accent-color:var(--accent);">
+        Se verificó quórum para la reunión
+      </label>
+    </div>
+  </div>
+
+  <!-- 2. PRESIDENTE Y SECRETARIO -->
+  <div class="card mb-4">
+    <div class="detail-section-title">2. Presidente y secretario</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nombre del presidente</label><input type="text" name="presidente_nombre" class="form-control" placeholder="Nombre completo del presidente"></div>
+      <div class="form-group"><label class="form-label">Cargo del presidente</label><input type="text" name="presidente_cargo" class="form-control" placeholder="Gerente, Director…"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nombre del secretario</label><input type="text" name="secretario_nombre" class="form-control" placeholder="Nombre completo del secretario"></div>
+      <div class="form-group"><label class="form-label">Cargo del secretario</label><input type="text" name="secretario_cargo" class="form-control" placeholder="Líder SST, Calidad…"></div>
+    </div>
+  </div>
+
+  <!-- 6. OBJETIVO -->
+  <div class="card mb-4">
+    <div class="detail-section-title">6. Objetivo del comité</div>
+    <div class="form-group"><textarea name="objetivo" class="form-control" rows="3" placeholder="Velar por el cumplimiento de lo establecido en…"></textarea></div>
+  </div>
+
+  <!-- 7. DESARROLLO -->
+  <div class="card mb-4">
+    <div class="detail-section-title">7. Desarrollo del comité</div>
+    <div class="form-group"><label class="form-label">Orden del día</label>
+      <textarea name="orden_dia" class="form-control" rows="4" placeholder="1. Verificación de Quórum&#10;2. Lectura del orden del día&#10;3. Aprobación del acta anterior&#10;4. Revisión de compromisos&#10;5. Informe de logros&#10;6. Proposiciones y varios"></textarea>
+    </div>
+    <div class="form-group"><label class="form-label">Desarrollo de la reunión</label>
+      <textarea name="desarrollo" class="form-control" rows="5" placeholder="Resumen de temas tratados, decisiones y acuerdos…"></textarea>
+    </div>
+  </div>
+
+  <!-- ESTADO Y ARCHIVO -->
+  <div class="card mb-4">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Estado del acta</label>
+        <select name="estado" class="form-control">
+          <option value="realizado">Realizado</option>
+          <option value="programado">Programado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">📎 Adjuntar archivo (PDF, Word)</label>
+        <input type="file" name="archivo" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <a href="/comites/{{ comite.id }}" class="btn btn-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-primary">💾 Guardar acta</button>
+  </div>
+</form>
+{% endblock %}

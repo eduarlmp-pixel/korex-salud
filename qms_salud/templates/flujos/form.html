@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set active_page = "flujos" %}
+{% block title %}Nuevo Flujo — QMS Salud{% endblock %}
+{% block page_title %}Nuevo Flujo de Trabajo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1>Nuevo flujo de trabajo</h1><div class="subtitle">Diseñe un proceso automatizable</div></div>
+  <a href="/flujos" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:600px;">
+  <div class="card">
+    <form action="/flujos/nuevo" method="post">
+      <div class="form-group">
+        <label class="form-label">Nombre del flujo *</label>
+        <input type="text" name="nombre" class="form-control" placeholder="Ej: Ingreso de Paciente" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Proceso</label>
+        <input type="text" name="proceso" class="form-control" placeholder="Admisiones, Calidad, Urgencias…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea name="descripcion" class="form-control" rows="3" placeholder="Descripción del flujo…"></textarea>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <a href="/flujos" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">+ Crear flujo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% set active_page = "comites" %}
+{% block title %}Acta {{ acta.numero_acta }}{% endblock %}
+{% block page_title %}Detalle de Acta{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <h1>Acta N° {{ acta.numero_acta }}</h1>
+      <span class="badge {% if acta.estado.value == 'realizado' %}badge-green{% elif acta.estado.value == 'programado' %}badge-blue{% else %}badge-gray{% endif %}">{{ acta.estado.value }}</span>
+      {% if acta.quorum %}<span class="badge badge-teal">✓ Quórum</span>{% endif %}
+      {% if acta_bloqueada %}<span class="badge badge-red">🔒 Bloqueada — firmada por Presidente y Secretario</span>{% endif %}
+    </div>
+    <div class="subtitle">{{ label }} · {{ acta.fecha.strftime('%d/%m/%Y %H:%M') if acta.fecha else '—' }}</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="/comites/{{ comite.id }}/acta/{{ acta.id }}/pdf" class="btn btn-primary">📄 Descargar PDF</a>
+    {% if acta.archivo_ruta %}<a href="/comites/acta/{{ acta.id }}/descargar" class="btn btn-success">📎 Archivo adjunto</a>{% endif %}
+    <a href="/comites/{{ comite.id }}" class="btn btn-secondary">← Volver</a>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div>
+    <!-- Info general -->
+    <div class="card mb-4">
+      <div class="detail-section-title">Información general</div>
+      <div class="form-row">
+        <div class="detail-field"><div class="field-label">Lugar</div><div class="field-value">{{ acta.lugar or '—' }}</div></div>
+        <div class="detail-field"><div class="field-label">Fecha</div><div class="field-value">{{ acta.fecha.strftime('%d/%m/%Y') if acta.fecha else '—' }}</div></div>
+      </div>
+      {% if acta.desarrollo %}<div class="detail-field"><div class="field-label">Desarrollo</div><div class="field-value" style="white-space:pre-line;color:var(--text2);">{{ acta.desarrollo }}</div></div>{% endif %}
+    </div>
+
+    <!-- Asistentes -->
+    <div class="card mb-4">
+      <div class="card-header"><div class="card-title">Control de asistencia ({{ acta.asistentes|length }})</div></div>
+      {% if acta.asistentes %}
+      <div class="table-wrap"><table>
+        <thead><tr><th>N°</th><th>Nombre</th><th>Cargo</th><th>Área</th><th>Acciones</th></tr></thead>
+        <tbody>{% for a in acta.asistentes %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ a.nombre }}<br><small style="color:var(--text3);">{{ a.email or 'Sin correo' }}</small></td>
+            <td>{{ a.cargo or '—' }}</td>
+            <td>{{ a.area or '—' }}</td>
+            <td>
+              {% if a.email and not a.firma %}
+              <form action="/comites/{{ comite.id }}/acta/{{ acta.id }}/asistente/{{ a.id }}/enviar-correo" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-secondary btn-sm" title="Enviar correo de firma">✉️ Enviar correo</button>
+              </form>
+              {% elif a.firma %}
+              <span style="color:var(--green);font-size:11px;">✓ Firmado</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<div style="font-size:13px;color:var(--text3);padding:8px 0 12px;">Sin asistentes.</div>{% endif %}
+
+      {% if not acta_bloqueada %}
+      <div class="divider"></div>
+      <form action="/comites/{{ comite.id }}/acta/{{ acta.id }}/asistente" method="post">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nombre *</label><input type="text" name="nombre" class="form-control" required></div>
+          <div class="form-group"><label class="form-label">Cargo</label><input type="text" name="cargo" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Área</label><input type="text" name="area" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" name="email" class="form-control" placeholder="Para firma remota"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">+ Agregar participante / invitado</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Compromisos -->
+    <div class="card mb-4">
+      <div class="card-header"><div class="card-title">Compromisos ({{ acta.compromisos|length }})</div></div>
+      {% for comp in acta.compromisos %}
+      <div style="padding:10px;border:1px solid var(--border);border-left:3px solid {% if comp.estado=='cumplido' %}var(--green){% elif comp.estado=='vencido' %}var(--red){% else %}var(--yellow){% endif %};border-radius:0 8px 8px 0;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:500;">{{ comp.descripcion }}</div>
+        <div style="font-size:11px;color:var(--text3);">👤 {{ comp.responsable or '—' }} {% if comp.fecha_limite %}· 📅 {{ comp.fecha_limite.strftime('%d/%m/%Y') }}{% endif %}</div>
+        {% if not acta_bloqueada %}
+        <form action="/comites/compromiso/{{ comp.id }}/estado" method="post" style="display:flex;gap:6px;margin-top:6px;">
+          <select name="estado" class="form-control" style="width:auto;font-size:11px;padding:3px 8px;">
+            <option value="pendiente" {% if comp.estado=='pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="cumplido" {% if comp.estado=='cumplido' %}selected{% endif %}>Cumplido</option>
+            <option value="vencido" {% if comp.estado=='vencido' %}selected{% endif %}>Vencido</option>
+          </select>
+          <input type="text" name="observacion" class="form-control" style="font-size:11px;padding:3px 8px;" placeholder="Observación…" value="{{ comp.observacion or '' }}">
+          <button type="submit" class="btn btn-secondary btn-sm">OK</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      {% if not acta_bloqueada %}
+      <div class="divider"></div>
+      <form action="/comites/{{ comite.id }}/acta/{{ acta.id }}/compromiso" method="post">
+        <div class="form-group"><label class="form-label">Nuevo compromiso *</label><textarea name="descripcion" class="form-control" rows="2" required placeholder="Descripción del compromiso…"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Responsable</label><input type="text" name="responsable" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Fecha límite</label><input type="date" name="fecha_limite" class="form-control"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">+ Agregar compromiso</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <!-- FIRMAS -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <div class="card-title">Firmas de validación ({{ firmas|length }})</div>
+      </div>
+      {% if firmas %}
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+        {% for f in firmas %}
+        <div style="padding:10px;border:1px solid var(--border);border-radius:8px;border-left:3px solid {% if f.rol_en_acta == 'presidente' %}var(--accent){% elif f.rol_en_acta == 'secretario' %}var(--teal){% else %}var(--text3){% endif %};">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-size:13px;font-weight:600;">{{ f.nombre }}</div>
+              <div style="font-size:11px;color:var(--text3);">{{ f.cargo }} · <span class="badge {% if f.rol_en_acta=='presidente' %}badge-blue{% elif f.rol_en_acta=='secretario' %}badge-teal{% else %}badge-gray{% endif %}">{{ f.rol_en_acta }}</span></div>
+              {% if f.comentario %}<div style="font-size:11px;color:var(--red);margin-top:3px;">⚠ {{ f.comentario }}</div>{% endif %}
+            </div>
+            <span class="badge {% if f.valida %}badge-green{% else %}badge-red{% endif %}">{% if f.valida %}✓ Válida{% else %}✗ No viable{% endif %}</span>
+          </div>
+          {% if f.firma_imagen %}
+          <img src="{{ f.firma_imagen }}" style="max-height:50px;max-width:150px;margin-top:6px;border:1px solid var(--border);border-radius:4px;background:#fff;">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="font-size:13px;color:var(--text3);margin-bottom:12px;">Sin firmas registradas aún.</div>
+      {% endif %}
+
+      {% if not acta_bloqueada %}
+      <div class="divider"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">Agregar firma</div>
+      <form action="/comites/{{ comite.id }}/acta/{{ acta.id }}/firma" method="post">
+        <div class="form-group">
+          <label class="form-label">Seleccionar Asistente *</label>
+          <select name="asistente_id" class="form-control" required>
+            <option value="">-- Seleccione un asistente registrado --</option>
+            {% for a in acta.asistentes %}
+              {% if not a.firma %}
+              <option value="{{ a.id }}">{{ a.nombre }} - {{ a.cargo or 'Sin cargo' }} ({{ a.rol_en_acta }})</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Valida el acta?</label>
+          <select name="valida" class="form-control">
+            <option value="true">Sí — Aprueba el acta</option>
+            <option value="false">No — No la considera viable</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Comentario (si no es viable)</label><textarea name="comentario" class="form-control" rows="2" placeholder="Indique por qué no la considera viable…"></textarea></div>
+        
+        <!-- PAD DE FIRMA -->
+        <div class="form-group">
+          <label class="form-label">Firma digital *</label>
+          
+          <div style="margin-bottom:8px;font-size:12px;">
+            <div style="border:1px solid var(--border);border-radius:6px;padding:8px;background:#f9fafb;margin-bottom:8px;">
+              <div style="font-weight:600;margin-bottom:4px;">1. Subir imagen (Fondo blanco)</div>
+              <input type="file" id="firmaArchivo" class="form-control" accept="image/jpeg,image/png,image/jpg" onchange="previsualizarFirmaInterna(this)" style="font-size:11px;padding:4px;">
+            </div>
+            <div style="font-weight:600;margin-bottom:4px;">2. O dibuja aquí tu firma:</div>
+          </div>
+
+          <canvas id="firmaCanvas" width="320" height="120" style="border:1.5px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair;touch-action:none;width:100%;display:block;"></canvas>
+          <input type="hidden" name="firma_imagen" id="firmaInput">
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button type="button" onclick="limpiar()" class="btn btn-secondary btn-sm">🗑 Limpiar</button>
+            <span id="st" style="font-size:11px;color:var(--text3);align-self:center;">Sin firma</span>
+          </div>
+        </div>
+        <button type="submit" onclick="return guardar()" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">✍️ Registrar firma</button>
+      </form>
+      {% else %}
+      <div class="alert alert-info">🔒 El acta está bloqueada. Presidente y Secretario ya firmaron. No se pueden hacer más cambios.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>
+const c=document.getElementById('firmaCanvas');
+if(c){
+  const ctx=c.getContext('2d');let d=false,h=false;
+  function gp(e){const r=c.getBoundingClientRect(),sx=c.width/r.width,sy=c.height/r.height;if(e.touches)return{x:(e.touches[0].clientX-r.left)*sx,y:(e.touches[0].clientY-r.top)*sy};return{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
+  ctx.strokeStyle='#1a56a0';ctx.lineWidth=2;ctx.lineCap='round';
+  c.onmousedown=e=>{d=true;const p=gp(e);ctx.beginPath();ctx.moveTo(p.x,p.y);};
+  c.onmousemove=e=>{if(!d)return;const p=gp(e);ctx.lineTo(p.x,p.y);ctx.stroke();h=true;document.getElementById('st').textContent='✓ Firmado';document.getElementById('st').style.color='var(--green)';};
+  c.onmouseup=()=>d=false;
+  c.addEventListener('touchstart',e=>{e.preventDefault();d=true;const p=gp(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
+  c.addEventListener('touchmove',e=>{e.preventDefault();if(!d)return;const p=gp(e);ctx.lineTo(p.x,p.y);ctx.stroke();h=true;},{passive:false});
+  c.ontouchend=()=>d=false;
+}
+function limpiar(){const c=document.getElementById('firmaCanvas');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);document.getElementById('firmaInput').value='';localStorage.removeItem('qms_firma_guardada');}
+function guardar(){const fi=document.getElementById('firmaInput');const c=document.getElementById('firmaCanvas');if(c){fi.value=c.toDataURL();localStorage.setItem('qms_firma_guardada',fi.value);}return true;}
+// Auto-cargar firma del perfil del usuario desde el servidor
+window.addEventListener('load', function() {
+  fetch('/perfil/mi-firma')
+    .then(r => r.json())
+    .then(data => {
+      if (data.firma) {
+        const c = document.getElementById('firmaCanvas');
+        if (c) {
+          const ctx = c.getContext('2d');
+          const img = new Image();
+          img.onload = () => {
+            ctx.clearRect(0,0,c.width,c.height);
+            // Escalar la firma al tamaño del canvas
+            const scale = Math.min(c.width/img.width, c.height/img.height);
+            const x = (c.width - img.width*scale)/2;
+            const y = (c.height - img.height*scale)/2;
+            ctx.drawImage(img, x, y, img.width*scale, img.height*scale);
+            document.getElementById('firmaInput').value = c.toDataURL();
+          };
+          img.src = data.firma;
+          const st = document.getElementById('st');
+          if(st){ st.textContent='✓ Firma cargada desde tu perfil'; st.style.color='var(--green)'; }
+        }
+      }
+    }).catch(() => {});
+});;
+</script>
+<script>
+function previsualizarFirmaInterna(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.getElementById('firmaCanvas');
+        if (c) {
+          const ctx = c.getContext('2d');
+          ctx.clearRect(0,0,c.width,c.height);
+          let ratio = Math.min(c.width / img.width, c.height / img.height);
+          let newW = img.width * ratio;
+          let newH = img.height * ratio;
+          let dx = (c.width - newW) / 2;
+          let dy = (c.height - newH) / 2;
+          ctx.drawImage(img, dx, dy, newW, newH);
+          document.getElementById('firmaInput').value = c.toDataURL('image/png');
+          const st = document.getElementById('st');
+          if(st){ st.textContent='✓ Firma cargada desde imagen'; st.style.color='var(--green)'; }
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

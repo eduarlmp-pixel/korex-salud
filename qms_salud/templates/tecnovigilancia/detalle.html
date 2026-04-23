@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set active_page = "tecnovigilancia" %}
+{% block title %}{{ eq.nombre }} — Tecnovigilancia{% endblock %}
+{% block page_title %}Equipo Biomédico{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>{{ eq.nombre }}</h1><div class="subtitle">{{ eq.marca }} {{ eq.modelo }} · {{ eq.area }} · {{ eq.codigo_qr }}</div></div>
+  <div style="display:flex;gap:8px;">
+    <a href="/tecnovigilancia/equipo-id/{{ eq.id }}/mantenimiento" class="btn btn-primary">+ Mantenimiento</a>
+    <a href="/tecnovigilancia" class="btn btn-secondary">← Volver</a>
+  </div>
+</div>
+<div class="grid-2 mb-4">
+  <!-- QR Code -->
+  <div class="card" style="text-align:center;">
+    <div class="detail-section-title" style="text-align:left;">Código QR del equipo</div>
+    {% if qr_b64 %}
+    <img src="data:image/png;base64,{{ qr_b64 }}" style="width:180px;height:180px;margin:10px auto;display:block;border:1px solid var(--border);border-radius:8px;padding:8px;background:#fff;">
+    {% else %}
+    <div style="padding:40px;color:var(--text3);font-size:13px;">QR no disponible<br><small>Instala: pip install qrcode Pillow</small></div>
+    {% endif %}
+    <div style="font-size:12px;color:var(--text3);margin-top:6px;">Escanea para ir directo al registro de mantenimiento</div>
+    <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--accent);margin-top:4px;">{{ eq.codigo_qr }}</div>
+  </div>
+  <!-- Info equipo -->
+  <div class="card">
+    <div class="detail-section-title">Información del equipo</div>
+    <div class="form-row">
+      <div class="detail-field"><div class="field-label">Marca</div><div class="field-value">{{ eq.marca or '—' }}</div></div>
+      <div class="detail-field"><div class="field-label">Modelo</div><div class="field-value">{{ eq.modelo or '—' }}</div></div>
+      <div class="detail-field"><div class="field-label">Serie</div><div class="field-value font-mono">{{ eq.serie or '—' }}</div></div>
+      <div class="detail-field"><div class="field-label">Área</div><div class="field-value">{{ eq.area or '—' }}</div></div>
+      <div class="detail-field"><div class="field-label">Ubicación</div><div class="field-value">{{ eq.ubicacion or '—' }}</div></div>
+      <div class="detail-field"><div class="field-label">Estado</div><div class="field-value"><span class="badge {% if eq.estado == 'operativo' %}badge-green{% else %}badge-yellow{% endif %}">{{ eq.estado }}</span></div></div>
+    </div>
+  </div>
+</div>
+<!-- Mantenimientos -->
+<div class="card">
+  <div class="card-header"><div class="card-title">Historial de mantenimientos ({{ mantenimientos|length }})</div><a href="/tecnovigilancia/equipo-id/{{ eq.id }}/mantenimiento" class="btn btn-primary btn-sm">+ Nuevo</a></div>
+  {% if mantenimientos %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Fecha</th><th>Tipo</th><th>Técnico</th><th>Próximo</th><th>Firmado</th><th></th></tr></thead>
+    <tbody>
+      {% for m in mantenimientos %}
+      <tr>
+        <td style="font-size:12px;">{{ m.fecha.strftime('%d/%m/%Y') }}</td>
+        <td><span class="badge badge-blue">{{ m.tipo }}</span></td>
+        <td style="font-size:12px;">{{ m.tecnico or '—' }}</td>
+        <td style="font-size:12px;color:var(--text3);">{{ m.proxima_fecha.strftime('%d/%m/%Y') if m.proxima_fecha else '—' }}</td>
+        <td><span class="badge {% if m.firmado %}badge-green{% else %}badge-yellow{% endif %}">{% if m.firmado %}✓{% else %}Pendiente{% endif %}</span></td>
+        <td><a href="/tecnovigilancia/mantenimiento/{{ m.id }}/reporte" class="btn btn-secondary btn-sm">📄 Reporte</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<div class="empty-state" style="padding:28px;"><div class="icon">🔧</div><p>Sin mantenimientos registrados.</p></div>{% endif %}
+</div>
+{% endblock %}

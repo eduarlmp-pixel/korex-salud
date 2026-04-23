@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% set active_page = "pqrs" %}
+{% block title %}PQRS — QMS Salud{% endblock %}
+{% block page_title %}PQRS{% endblock %}
+{% set p = permisos.get('pqrs', {}) %}
+{% block topbar_actions %}
+  {% if p.get('puede_crear') %}<a href="/pqrs/nueva" class="btn btn-primary">+ Nueva PQRS</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>PQRS y eventos adversos</h1>
+    <div class="subtitle">Peticiones, quejas, reclamos, sugerencias y eventos de seguridad del paciente</div>
+  </div>
+</div>
+
+<form method="get" class="filters-bar mb-4">
+  <select name="estado" class="form-control">
+    <option value="">Todos los estados</option>
+    <option value="abierta" {% if filtros.estado == 'abierta' %}selected{% endif %}>Abierta</option>
+    <option value="en_gestion" {% if filtros.estado == 'en_gestion' %}selected{% endif %}>En gestión</option>
+    <option value="resuelta" {% if filtros.estado == 'resuelta' %}selected{% endif %}>Resuelta</option>
+    <option value="cerrada" {% if filtros.estado == 'cerrada' %}selected{% endif %}>Cerrada</option>
+  </select>
+  <select name="tipo" class="form-control">
+    <option value="">Todos los tipos</option>
+    <option value="peticion" {% if filtros.tipo == 'peticion' %}selected{% endif %}>Petición</option>
+    <option value="queja" {% if filtros.tipo == 'queja' %}selected{% endif %}>Queja</option>
+    <option value="reclamo" {% if filtros.tipo == 'reclamo' %}selected{% endif %}>Reclamo</option>
+    <option value="sugerencia" {% if filtros.tipo == 'sugerencia' %}selected{% endif %}>Sugerencia</option>
+    <option value="evento_adverso" {% if filtros.tipo == 'evento_adverso' %}selected{% endif %}>Evento adverso</option>
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if filtros.estado or filtros.tipo %}<a href="/pqrs" class="btn btn-secondary">✕ Limpiar</a>{% endif %}
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    {% if pqrs_list %}
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th><th>Tipo</th><th>Descripción</th><th>Solicitante</th>
+          <th>Prioridad</th><th>Estado</th><th>Fecha límite</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pqrs_list %}
+        <tr>
+          <td class="font-mono" style="font-size:11px; color:var(--text3);">{{ p.codigo }}</td>
+          <td>
+            <span class="badge
+              {% if p.tipo.value == 'queja' %}badge-red
+              {% elif p.tipo.value == 'evento_adverso' %}badge-orange
+              {% elif p.tipo.value == 'peticion' %}badge-blue
+              {% elif p.tipo.value == 'reclamo' %}badge-yellow
+              {% else %}badge-gray{% endif %}">
+              {{ p.tipo.value }}
+            </span>
+          </td>
+          <td style="max-width:260px;">{{ p.descripcion[:60] }}{% if p.descripcion|length > 60 %}…{% endif %}</td>
+          <td style="font-size:12px; color:var(--text2);">{{ p.nombre_solicitante or '—' }}</td>
+          <td>
+            <span class="badge {% if p.prioridad == 'alta' %}badge-red{% elif p.prioridad == 'normal' %}badge-blue{% else %}badge-gray{% endif %}">
+              {{ p.prioridad }}
+            </span>
+          </td>
+          <td>
+            <span class="badge
+              {% if p.estado.value == 'abierta' %}badge-red
+              {% elif p.estado.value == 'en_gestion' %}badge-yellow
+              {% elif p.estado.value == 'resuelta' %}badge-green
+              {% else %}badge-gray{% endif %}">
+              {{ p.estado.value }}
+            </span>
+          </td>
+          <td style="font-size:12px; color:{% if p.fecha_limite and p.fecha_limite < now() %}var(--red){% else %}var(--text3){% endif %};">
+            {{ p.fecha_limite.strftime('%d/%m/%Y') if p.fecha_limite else '—' }}
+          </td>
+          <td>
+            <button onclick="toggleRespuesta({{ p.id }})" class="btn btn-secondary btn-sm">Responder</button>
+          </td>
+        </tr>
+        <!-- Panel respuesta -->
+        <tr id="resp-{{ p.id }}" style="display:none; background:var(--bg3);">
+          <td colspan="8" style="padding:14px;">
+            <form action="/pqrs/{{ p.id }}/responder" method="post">
+              <div class="form-row">
+                <div class="form-group" style="grid-column:1/-1;">
+                  <label class="form-label">Respuesta / gestión realizada</label>
+                  <textarea name="respuesta" class="form-control" rows="3" required placeholder="Describa la gestión y respuesta dada al solicitante…">{{ p.respuesta or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Cambiar estado</label>
+                  <select name="estado" class="form-control">
+                    <option value="en_gestion">En gestión</option>
+                    <option value="resuelta">Resuelta</option>
+                    <option value="cerrada">Cerrada</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button type="submit" class="btn btn-primary btn-sm">💾 Guardar respuesta</button>
+                <button type="button" onclick="toggleRespuesta({{ p.id }})" class="btn btn-secondary btn-sm">Cancelar</button>
+              </div>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">💬</div>
+      <p>No hay PQRS registradas.</p>
+      <a href="/pqrs/nueva" class="btn btn-primary" style="margin-top:12px;">Registrar primera PQRS</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRespuesta(id) {
+  const row = document.getElementById('resp-' + id);
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+// Exponer fecha actual a Jinja
+</script>
+{% endblock %}

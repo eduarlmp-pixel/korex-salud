@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% set active_page = "home" %}
+{% block title %}Inicio — QMS Salud{% endblock %}
+{% block page_title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Bienvenido, {{ user.nombre }} 👋</h1>
+    <div class="subtitle">Selecciona un módulo para comenzar</div>
+  </div>
+</div>
+
+{% if stats.riesgos_criticos > 0 or stats.pqrs_abiertas > 5 or stats.condiciones_inseguras > 0 or stats.pendientes_firma > 0 %}
+<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
+  {% if stats.pendientes_firma > 0 %}<a href="/comites" class="alert alert-warning" style="display:flex;align-items:center;gap:10px;text-decoration:none;">✍️ <strong>{{ stats.pendientes_firma }} acta(s) sin firmar</strong> — hay actas de comités pendientes de validación</a>{% endif %}
+  {% if stats.riesgos_criticos > 0 %}<a href="/riesgos?nivel=critico" class="alert alert-danger" style="display:flex;align-items:center;gap:10px;text-decoration:none;">⚠️ <strong>{{ stats.riesgos_criticos }} riesgo(s) crítico(s)</strong> — requieren atención inmediata</a>{% endif %}
+  {% if stats.condiciones_inseguras > 0 %}<a href="/sst" class="alert alert-warning" style="display:flex;align-items:center;gap:10px;text-decoration:none;">🚨 <strong>{{ stats.condiciones_inseguras }} condición(es) insegura(s)</strong> abiertas en SST</a>{% endif %}
+  {% if stats.pqrs_abiertas > 5 %}<a href="/pqrs?estado=abierta" class="alert alert-warning" style="display:flex;align-items:center;gap:10px;text-decoration:none;">💬 <strong>{{ stats.pqrs_abiertas }} PQRS abiertas</strong> pendientes de gestión</a>{% endif %}
+</div>
+{% endif %}
+
+<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Calidad e inocuidad</div>
+<div class="home-grid mb-6">
+  <a href="/documentos" class="home-card"><div class="home-card-banner banner-docs">📁</div><div class="home-card-body"><div class="home-card-title">Documentos</div><div class="home-card-sub">Repositorio, versiones y aprobaciones</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_docs }}</span><span class="home-card-label">documentos</span></div></div></a>
+  <a href="/auditorias" class="home-card"><div class="home-card-banner banner-audit">✅</div><div class="home-card-body"><div class="home-card-title">Auditorías</div><div class="home-card-sub">Plan, checklists y hallazgos</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_auditorias }}</span><span class="home-card-label">auditorías</span></div></div></a>
+  <a href="/mejora" class="home-card"><div class="home-card-banner banner-mejora">🔄</div><div class="home-card-body"><div class="home-card-title">Mejora continua</div><div class="home-card-sub">PAMEC, acciones correctivas</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_acciones }}</span><span class="home-card-label">acciones</span></div></div></a>
+  <a href="/indicadores" class="home-card"><div class="home-card-banner banner-indicadores">📈</div><div class="home-card-body"><div class="home-card-title">Indicadores</div><div class="home-card-sub">KPIs de calidad asistencial</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_indicadores }}</span><span class="home-card-label">indicadores</span></div></div></a>
+  <a href="/riesgos" class="home-card"><div class="home-card-banner banner-riesgos">⚠️</div><div class="home-card-body"><div class="home-card-title">Riesgos</div><div class="home-card-sub">Mapa térmico FMEA</div><div class="home-card-count"><span class="home-card-num" style="color:{% if stats.riesgos_criticos > 0 %}var(--red){% else %}var(--accent){% endif %}">{{ stats.total_riesgos }}</span><span class="home-card-label">{% if stats.riesgos_criticos > 0 %}{{ stats.riesgos_criticos }} críticos{% else %}registrados{% endif %}</span></div></div></a>
+  <a href="/seguridad-paciente" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#1e3a5f,#22c55e);">🛡️</div><div class="home-card-body"><div class="home-card-title">Seguridad del paciente</div><div class="home-card-sub">Rondas, paquetes instruccionales</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_rondas }}</span><span class="home-card-label">rondas</span></div></div></a>
+    <a href="/comites" class="home-card"><div class="home-card-banner banner-comites">🏛️</div><div class="home-card-body"><div class="home-card-title">Comités</div><div class="home-card-sub">Actas, firmas y compromisos</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_comites }}</span><span class="home-card-label">comités</span></div></div></a>
+</div>
+
+<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Seguridad y ambiente</div>
+<div class="home-grid mb-6">
+  <a href="/sst" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#991b1b,#f87171);">🦺</div><div class="home-card-body"><div class="home-card-title">SST</div><div class="home-card-sub">Inspecciones, capacitaciones, condiciones</div><div class="home-card-count"><span class="home-card-num" style="color:{% if stats.condiciones_inseguras > 0 %}var(--red){% else %}var(--accent){% endif %}">{{ stats.condiciones_inseguras }}</span><span class="home-card-label">condiciones abiertas</span></div></div></a>
+  <a href="/ambiental" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#14532d,#22c55e);">♻️</div><div class="home-card-body"><div class="home-card-title">Gestión ambiental</div><div class="home-card-sub">Residuos, certificados y capacitaciones</div><div class="home-card-count"><span class="home-card-label" style="font-size:12px;color:var(--accent);">Ver módulo →</span></div></div></a>
+  <a href="/ambiente-fisico" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#1e3a5f,#7dd3fc);">🏗️</div><div class="home-card-body"><div class="home-card-title">Ambiente físico</div><div class="home-card-sub">Cronograma y evidencias</div><div class="home-card-count"><span class="home-card-label" style="font-size:12px;color:var(--accent);">Ver cronograma →</span></div></div></a>
+</div>
+
+<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Tecnología y operaciones</div>
+<div class="home-grid">
+  <a href="/tecnovigilancia" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#1e3a5f,#b45309);">🏥</div><div class="home-card-body"><div class="home-card-title">Tecnovigilancia</div><div class="home-card-sub">Equipos biomédicos y QR</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_equipos_bio }}</span><span class="home-card-label">equipos</span></div></div></a>
+  <a href="/sistemas" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#1e40af,#93c5fd);">💻</div><div class="home-card-body"><div class="home-card-title">Sistemas</div><div class="home-card-sub">Mantenimiento de cómputo</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_equipos_sis }}</span><span class="home-card-label">equipos</span></div></div></a>
+  <a href="/ambulancias" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#1e3a5f,#e74c3c);">🚑</div><div class="home-card-body"><div class="home-card-title">Ambulancias</div><div class="home-card-sub">Flota y preoperacionales</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_ambulancias }}</span><span class="home-card-label">vehículos</span></div></div></a>
+  <a href="/talento" class="home-card"><div class="home-card-banner banner-talento">👥</div><div class="home-card-body"><div class="home-card-title">Talento humano</div><div class="home-card-sub">Expedientes y capacitaciones</div><div class="home-card-count"><span class="home-card-num">{{ stats.total_empleados }}</span><span class="home-card-label">empleados</span></div></div></a>
+  <a href="/pqrs" class="home-card"><div class="home-card-banner banner-pqrs">💬</div><div class="home-card-body"><div class="home-card-title">PQRS</div><div class="home-card-sub">Quejas y eventos adversos</div><div class="home-card-count"><span class="home-card-num" style="color:{% if stats.pqrs_abiertas > 0 %}var(--red){% else %}var(--accent){% endif %}">{{ stats.pqrs_abiertas }}</span><span class="home-card-label">abiertas</span></div></div></a>
+  <a href="/dashboard" class="home-card"><div class="home-card-banner" style="background:linear-gradient(135deg,#134e4a,#14b8a6);">📊</div><div class="home-card-body"><div class="home-card-title">Dashboard</div><div class="home-card-sub">Resumen de métricas y KPIs</div><div class="home-card-count"><span class="home-card-label" style="font-size:12px;color:var(--accent);">Ver resumen →</span></div></div></a>
+</div>
+{% endblock %}

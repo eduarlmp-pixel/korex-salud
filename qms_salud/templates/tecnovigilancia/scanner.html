@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% set active_page = "tecnovigilancia" %}
+{% block title %}Escáner QR — Tecnovigilancia{% endblock %}
+{% block page_title %}Escáner QR{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Escáner QR de equipos</h1><div class="subtitle">Apunta la cámara al código QR del equipo biomédico</div></div>
+  <a href="/tecnovigilancia" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:500px; margin:0 auto;">
+  <div class="card" style="text-align:center; padding:24px;">
+    <div id="reader" style="width:100%; border-radius:10px; overflow:hidden;"></div>
+    <div id="resultado" style="margin-top:16px; font-size:13px; color:var(--text3);">Esperando código QR…</div>
+    <div id="acciones" style="margin-top:12px; display:none;">
+      <a id="btn-ver" href="#" class="btn btn-primary" style="margin-right:8px;">👁 Ver equipo</a>
+      <a id="btn-mant" href="#" class="btn btn-secondary">🔧 Registrar mantenimiento</a>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:10px;">O ingresa el código manualmente:</div>
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="codigoManual" class="form-control" placeholder="EQ-XXXXXXXX" style="flex:1;">
+      <button onclick="buscarManual()" class="btn btn-primary">Buscar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+let scanner = null;
+function onScan(decodedText) {
+  document.getElementById('resultado').textContent = '✓ Código detectado: ' + decodedText;
+  document.getElementById('resultado').style.color = 'var(--green)';
+  // Extraer código del equipo de la URL
+  const partes = decodedText.split('/');
+  const codigo = partes[partes.length - 1];
+  document.getElementById('btn-ver').href = '/tecnovigilancia/equipo/' + codigo;
+  document.getElementById('btn-mant').href = '/tecnovigilancia/equipo/' + codigo;
+  document.getElementById('acciones').style.display = 'block';
+  if(scanner) scanner.stop();
+}
+try {
+  scanner = new Html5QrcodeScanner("reader", {fps:10, qrbox:250});
+  scanner.render(onScan, err => {});
+} catch(e) {
+  document.getElementById('reader').innerHTML = '<div style="padding:24px;color:var(--text3);">No se pudo acceder a la cámara.<br>Usa el campo manual abajo.</div>';
+}
+function buscarManual() {
+  const codigo = document.getElementById('codigoManual').value.trim();
+  if(!codigo) return;
+  window.location.href = '/tecnovigilancia/equipo/' + codigo;
+}
+</script>
+{% endblock %}

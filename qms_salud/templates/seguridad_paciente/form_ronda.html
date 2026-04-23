@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% set active_page = "seguridad_paciente" %}
+{% block title %}Nueva Ronda de Seguridad{% endblock %}
+{% block page_title %}Ronda de Seguridad{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Lista de chequeo — Ronda de seguridad</h1><div class="subtitle">GER-SEG-FM-13 · Versión 2</div></div>
+  <a href="/seguridad-paciente" class="btn btn-secondary">← Volver</a>
+</div>
+
+<form action="/seguridad-paciente/ronda/nueva" method="post">
+  <!-- Encabezado -->
+  <div class="card mb-4">
+    <div class="form-row-3">
+      <div class="form-group"><label class="form-label">Nombre del evaluador *</label><input type="text" name="evaluador" class="form-control" required placeholder="Nombre completo"></div>
+      <div class="form-group"><label class="form-label">Servicio o área *</label><input type="text" name="servicio" class="form-control" required placeholder="Urgencias, UCI, Hospitalización…"></div>
+      <div class="form-group"><label class="form-label">Fecha</label><input type="datetime-local" name="fecha" class="form-control" value="{{ now().strftime('%Y-%m-%dT%H:%M') }}"></div>
+    </div>
+  </div>
+
+  <!-- Secciones de chequeo -->
+  {% for sec_nombre, items in secciones %}
+  <div class="card mb-4">
+    <div class="detail-section-title">{{ sec_nombre }}</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      {% for campo, label in items %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);">
+        <span style="font-size:12px;font-weight:500;flex:1;padding-right:16px;">{{ label }}</span>
+        <div style="display:flex;gap:12px;flex-shrink:0;">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:700;color:var(--green);">
+            <input type="radio" name="{{ campo }}" value="1" checked style="accent-color:var(--green);"> ✓ Cumple
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;font-weight:700;color:var(--red);">
+            <input type="radio" name="{{ campo }}" value="2" style="accent-color:var(--red);"> ✗ No cumple
+          </label>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Entrevista colaborador -->
+  <div class="card mb-4">
+    <div class="detail-section-title">Entrevista al colaborador</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      {% for preg in preguntas %}
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">{{ loop.index }}. {{ preg }}</label>
+        <textarea name="pregunta{{ loop.index }}" class="form-control" rows="2" placeholder="Respuesta del colaborador…"></textarea>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Observaciones -->
+  <div class="card mb-4">
+    <div class="form-group" style="margin-bottom:0;">
+      <label class="form-label">Observaciones generales</label>
+      <textarea name="observaciones" class="form-control" rows="3"></textarea>
+    </div>
+  </div>
+
+  <!-- FIRMAS -->
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="detail-section-title">Firma del evaluador (realizó)</div>
+      <canvas id="firmaEval" width="340" height="130" style="border:1.5px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair;touch-action:none;width:100%;display:block;"></canvas>
+      <input type="hidden" name="firma_evaluador" id="firmaEvalInput">
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button type="button" onclick="limpiar('firmaEval','firmaEvalInput','st1')" class="btn btn-secondary btn-sm">🗑 Limpiar</button>
+        <span id="st1" style="font-size:11px;color:var(--text3);align-self:center;">Sin firma</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="detail-section-title">Firma del receptor (recibió)</div>
+      <canvas id="firmaRec" width="340" height="130" style="border:1.5px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair;touch-action:none;width:100%;display:block;"></canvas>
+      <input type="hidden" name="firma_receptor" id="firmaRecInput">
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button type="button" onclick="limpiar('firmaRec','firmaRecInput','st2')" class="btn btn-secondary btn-sm">🗑 Limpiar</button>
+        <span id="st2" style="font-size:11px;color:var(--text3);align-self:center;">Sin firma</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <a href="/seguridad-paciente" class="btn btn-secondary">Cancelar</a>
+    <button type="submit" onclick="return guardar()" class="btn btn-primary" style="padding:10px 28px;">💾 Guardar y descargar reporte</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}<script>
+function initCanvas(id) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  let d = false;
+  function gp(e) {
+    const r = c.getBoundingClientRect(), sx = c.width/r.width, sy = c.height/r.height;
+    if(e.touches) return {x:(e.touches[0].clientX-r.left)*sx, y:(e.touches[0].clientY-r.top)*sy};
+    return {x:(e.clientX-r.left)*sx, y:(e.clientY-r.top)*sy};
+  }
+  ctx.strokeStyle = '#1a56a0'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  c.onmousedown = e => { d=true; const p=gp(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); };
+  c.onmousemove = e => { if(!d) return; const p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
+  c.onmouseup = () => d=false;
+  c.addEventListener('touchstart', e => { e.preventDefault(); d=true; const p=gp(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }, {passive:false});
+  c.addEventListener('touchmove', e => { e.preventDefault(); if(!d) return; const p=gp(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }, {passive:false});
+  c.ontouchend = () => d=false;
+}
+initCanvas('firmaEval');
+initCanvas('firmaRec');
+
+function limpiar(canvasId, inputId, stId) {
+  const c = document.getElementById(canvasId);
+  c.getContext('2d').clearRect(0,0,c.width,c.height);
+  document.getElementById(inputId).value = '';
+  document.getElementById(stId).textContent = 'Sin firma';
+}
+
+function guardar() {
+  const ce = document.getElementById('firmaEval');
+  const cr = document.getElementById('firmaRec');
+  document.getElementById('firmaEvalInput').value = ce.toDataURL();
+  document.getElementById('firmaRecInput').value = cr.toDataURL();
+  return true;
+}
+</script>{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set active_page = "ambiental" %}
+{% block title %}Nuevo Registro Residuos{% endblock %}
+{% block page_title %}Registrar Residuos{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Registro de residuos</h1><div class="subtitle">Registre el peso por tipo de residuo generado</div></div>
+  <a href="/ambiental" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:640px;">
+  <div class="card">
+    <form action="/ambiental/nuevo-registro" method="post">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo de residuo *</label>
+          <select name="tipo" class="form-control" required onchange="actualizarSubtipos(this.value)">
+            {% for tipo, info in tipos.items() %}
+            <option value="{{ tipo }}">{{ info[0] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Subtipo / Descripción</label>
+          <input type="text" name="subtipo" id="subtipo" class="form-control" placeholder="Papel, plástico, vidrio…">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Peso (kg) *</label><input type="number" step="0.01" name="peso_kg" class="form-control" required placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Mes (AAAA-MM)</label><input type="month" name="mes" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Gestor externo</label><input type="text" name="gestor_externo" class="form-control" placeholder="Empresa de gestión de residuos"></div>
+        <div class="form-group"><label class="form-label">N° de manifiesto</label><input type="text" name="numero_manifiesto" class="form-control" placeholder="Número del manifiesto"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observaciones</label><textarea name="observaciones" class="form-control" rows="2"></textarea></div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <a href="/ambiental" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">♻️ Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

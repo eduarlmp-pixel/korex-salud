@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% set active_page = "talento" %}
+{% block title %}Talento Humano — QMS Salud{% endblock %}
+{% block page_title %}Talento Humano{% endblock %}
+{% set p = permisos.get('talento', {}) %}
+{% block topbar_actions %}
+  <a href="/talento/capacitaciones" class="btn btn-secondary">📚 Capacitaciones</a>
+  <a href="/talento/vencimientos" class="btn btn-secondary">⏰ Vencimientos</a>
+  {% if p.get('puede_crear') %}
+  <a href="/talento/nuevo" class="btn btn-primary">+ Nuevo empleado</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Gestión de talento humano</h1>
+    <div class="subtitle">Expedientes, competencias, capacitaciones y vencimientos del personal</div>
+  </div>
+</div>
+
+{% if request.query_params.get('importados') %}
+<div class="alert alert-success mb-4">
+  ✅ {{ request.query_params.get('importados') }} empleado(s) nuevo(s) creado(s)
+  {% if request.query_params.get('actualizados') and request.query_params.get('actualizados') != '0' %}
+  · {{ request.query_params.get('actualizados') }} actualizado(s)
+  {% endif %}
+  — cursos y vencimientos registrados automáticamente.
+</div>
+{% endif %}
+{% if request.query_params.get('error') %}
+<div class="alert alert-danger mb-4">Error al procesar el archivo. Verifique que sea la plantilla .xlsx descargada del sistema.</div>
+{% endif %}
+
+<!-- Alertas de vencimiento -->
+{% if vencidos > 0 or proximos > 0 %}
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+  {% if vencidos > 0 %}
+  <a href="/talento/vencimientos" style="text-decoration:none; flex:1; min-width:200px;">
+    <div style="padding:14px 18px; background:var(--red); border-radius:10px; display:flex; align-items:center; gap:12px; color:#fff;">
+      <span style="font-size:28px;">🔴</span>
+      <div>
+        <div style="font-size:22px; font-weight:800; font-family:'DM Mono',monospace;">{{ vencidos }}</div>
+        <div style="font-size:12px; opacity:0.9;">curso{{ 's' if vencidos != 1 else '' }} vencido{{ 's' if vencidos != 1 else '' }} — acción urgente</div>
+      </div>
+    </div>
+  </a>
+  {% endif %}
+  {% if proximos > 0 %}
+  <a href="/talento/vencimientos" style="text-decoration:none; flex:1; min-width:200px;">
+    <div style="padding:14px 18px; background:var(--yellow); border-radius:10px; display:flex; align-items:center; gap:12px; color:#fff;">
+      <span style="font-size:28px;">🟡</span>
+      <div>
+        <div style="font-size:22px; font-weight:800; font-family:'DM Mono',monospace;">{{ proximos }}</div>
+        <div style="font-size:12px; opacity:0.9;">vence{{ 'n' if proximos != 1 else '' }} en los próximos 30 días</div>
+      </div>
+    </div>
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Dos columnas: carga masiva + capacitaciones próximas -->
+<div class="grid-2 mb-4">
+  {% if p.get('puede_crear') %}
+  <div class="card" style="padding:14px;">
+    <div style="font-size:12px; font-weight:600; color:var(--text2); margin-bottom:10px;">📤 Carga masiva de personal</div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+      <a href="/talento/plantilla-empleados" class="btn btn-secondary btn-sm">⬇ Plantilla .xlsx</a>
+      <form action="/talento/importar-empleados" method="post" enctype="multipart/form-data" style="display:flex; gap:6px; align-items:center;">
+        <input type="file" name="archivo" accept=".xls,.xlsx" class="form-control" style="width:auto; font-size:12px;">
+        <button type="submit" class="btn btn-primary btn-sm">Importar</button>
+      </form>
+    </div>
+    <div style="font-size:11px; color:var(--text3);">La plantilla incluye cursos obligatorios, vacunas y SST. Los vencimientos se calculan automáticamente.</div>
+  </div>
+  {% else %}
+  <div></div>
+  {% endif %}
+
+  <div class="card" style="padding:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-size:12px; font-weight:600; color:var(--text2);">📚 Capacitaciones programadas</div>
+      {% if p.get('puede_crear') %}<a href="/talento/capacitaciones/nueva" class="btn btn-primary btn-sm">+ Nueva</a>{% endif %}
+    </div>
+    {% if caps_proximas %}
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      {% for cap in caps_proximas %}
+      <a href="/talento/capacitaciones/{{ cap.id }}" style="text-decoration:none;">
+        <div style="padding:8px 10px; border:1px solid var(--border); border-radius:8px; border-left:3px solid var(--accent);">
+          <div style="font-size:13px; font-weight:600; color:var(--text);">{{ cap.titulo[:50] }}{% if cap.titulo|length > 50 %}…{% endif %}</div>
+          <div style="font-size:11px; color:var(--text3); margin-top:2px;">
+            {{ cap.tipo or '—' }} ·
+            {% if cap.fecha_programada %}📅 {{ cap.fecha_programada.strftime('%d/%m/%Y') }}{% else %}Sin fecha{% endif %} ·
+            👤 {{ cap.responsable.nombres + ' ' + cap.responsable.apellidos if cap.responsable else 'Sin responsable' }}
+          </div>
+          <div style="font-size:11px; color:var(--text3);">{{ cap.asistentes|length }} participante{{ 's' if cap.asistentes|length != 1 else '' }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="font-size:13px; color:var(--text3); padding:8px 0;">No hay capacitaciones programadas.</div>
+    {% endif %}
+    <a href="/talento/capacitaciones" class="btn btn-secondary btn-sm" style="margin-top:10px; width:100%; text-align:center;">Ver todas →</a>
+  </div>
+</div>
+
+<form method="get" class="filters-bar mb-4">
+  <input type="text" name="q" class="form-control search-input" placeholder="🔍  Buscar por nombre o cargo…" value="{{ filtros.q }}">
+  <select name="area" class="form-control">
+    <option value="">Todas las áreas</option>
+    {% for area in areas %}
+    <option value="{{ area }}" {% if filtros.area == area %}selected{% endif %}>{{ area }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  {% if filtros.q or filtros.area %}<a href="/talento" class="btn btn-secondary">✕ Limpiar</a>{% endif %}
+</form>
+
+{% if empleados %}
+<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px;">
+  {% for emp in empleados %}
+  {% set vc_criticos = emp.vencimientos | selectattr('activo') | selectattr('fecha_vencimiento') | list %}
+  {% set vc_rojos = [] %}
+  {% for vc in vc_criticos %}{% if vc.fecha_vencimiento < hoy %}{% set _ = vc_rojos.append(vc) %}{% endif %}{% endfor %}
+  <a href="/talento/{{ emp.id }}" style="text-decoration:none;">
+    <div class="card" style="padding:14px; transition:border-color 0.2s; cursor:pointer;
+      {% if vc_rojos|length > 0 %}border-left:3px solid var(--red);{% endif %}">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="sidebar-avatar" style="width:40px; height:40px; font-size:15px; border-radius:10px; flex-shrink:0; background:hsl({{ loop.index * 47 }},50%,40%);">
+          {{ emp.nombres[0] }}{{ emp.apellidos[0] }}
+        </div>
+        <div style="min-width:0;">
+          <div style="font-size:14px; font-weight:600; color:var(--text);">{{ emp.nombres }} {{ emp.apellidos }}</div>
+          <div style="font-size:12px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ emp.profesion or emp.cargo or '—' }}</div>
+          <span class="badge badge-gray" style="margin-top:4px; font-size:10px;">{{ emp.area or '—' }}</span>
+          {% if vc_rojos|length > 0 %}
+          <span class="badge badge-red" style="margin-top:4px; font-size:10px;">⚠ {{ vc_rojos|length }} vencido{{ 's' if vc_rojos|length != 1 else '' }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if emp.fecha_ingreso %}
+      <div style="font-size:11px; color:var(--text3); margin-top:8px;">
+        📅 Ingreso: {{ emp.fecha_ingreso.strftime('%d/%m/%Y') }}
+      </div>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">👥</div>
+    <p>No se encontraron empleados.</p>
+    {% if p.get('puede_crear') %}<a href="/talento/nuevo" class="btn btn-primary" style="margin-top:12px;">Registrar primer empleado</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

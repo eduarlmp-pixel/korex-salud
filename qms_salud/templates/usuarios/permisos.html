@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set active_page = "usuarios" %}
+{% block title %}Permisos — {{ u.nombre }} {{ u.apellido }} — QMS Salud{% endblock %}
+{% block page_title %}Permisos de módulos{% endblock %}
+{% block topbar_actions %}
+  <a href="/usuarios" class="btn btn-secondary">← Volver</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">{{ u.nombre }} {{ u.apellido }}</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:2px;">{{ u.email }} ·
+        <span class="badge badge-blue" style="font-size:11px;">{{ u.rol.value }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if u.rol.value == 'admin' %}
+  <div style="padding:24px;">
+    <div class="alert alert-info">Los administradores tienen acceso total a todos los módulos. No es posible restringir sus permisos.</div>
+  </div>
+  {% else %}
+  <form method="post" action="/usuarios/{{ u.id }}/permisos">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:180px;">Módulo</th>
+            <th style="text-align:center;">Ver</th>
+            <th style="text-align:center;">Crear</th>
+            <th style="text-align:center;">Editar</th>
+            <th style="text-align:center;">Aprobar</th>
+            <th style="text-align:center;">Eliminar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for (modulo, nombre_modulo) in modulos %}
+          {% set p = permisos_map.get(modulo) %}
+          <tr>
+            <td style="font-weight:500;">{{ nombre_modulo }}</td>
+            <td style="text-align:center;">
+              <input type="checkbox" name="{{ modulo }}_ver" id="{{ modulo }}_ver"
+                {% if p and p.puede_ver %}checked{% endif %}
+                onchange="syncRow('{{ modulo }}', this.checked)">
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" name="{{ modulo }}_crear" class="dep-{{ modulo }}"
+                {% if p and p.puede_crear %}checked{% endif %}
+                {% if not p or not p.puede_ver %}disabled{% endif %}>
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" name="{{ modulo }}_editar" class="dep-{{ modulo }}"
+                {% if p and p.puede_editar %}checked{% endif %}
+                {% if not p or not p.puede_ver %}disabled{% endif %}>
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" name="{{ modulo }}_aprobar" class="dep-{{ modulo }}"
+                {% if p and p.puede_aprobar %}checked{% endif %}
+                {% if not p or not p.puede_ver %}disabled{% endif %}>
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" name="{{ modulo }}_eliminar" class="dep-{{ modulo }}"
+                {% if p and p.puede_eliminar %}checked{% endif %}
+                {% if not p or not p.puede_ver %}disabled{% endif %}>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:16px 24px;display:flex;gap:10px;">
+      <button type="submit" class="btn btn-primary">Guardar permisos</button>
+      <a href="/usuarios" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function syncRow(modulo, verChecked) {
+  document.querySelectorAll('.dep-' + modulo).forEach(cb => {
+    cb.disabled = !verChecked;
+    if (!verChecked) cb.checked = false;
+  });
+}
+</script>
+{% endblock %}

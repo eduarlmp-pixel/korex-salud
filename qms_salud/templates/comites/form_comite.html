@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% set active_page = "comites" %}
+{% block title %}Nuevo Comité — QMS Salud{% endblock %}
+{% block page_title %}Nuevo Comité{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Registrar comité</h1><div class="subtitle">Configure un nuevo comité institucional</div></div>
+  <a href="/comites" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:600px;">
+  <div class="card">
+    <form action="/comites/nuevo-comite" method="post">
+      <div class="form-group">
+        <label class="form-label">Tipo de comité *</label>
+        <select name="tipo" class="form-control" required>
+          <option value="">Seleccionar tipo…</option>
+          <option value="calidad">Comité de Calidad</option>
+          <option value="seguridad_paciente">Comité de Seguridad del Paciente</option>
+          <option value="etica">Comité de Ética</option>
+          <option value="iaas">Comité IAAS / Infecciones</option>
+          <option value="farmacia">Comité de Farmacia</option>
+          <option value="historias_clinicas">Comité de Historias Clínicas</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre del comité *</label>
+        <input type="text" name="nombre" class="form-control" required placeholder="Ej: Comité Institucional de Calidad y Seguridad del Paciente">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <textarea name="descripcion" class="form-control" rows="3" placeholder="Objetivo y alcance del comité…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Periodicidad de reunión</label>
+        <select name="periodicidad" class="form-control">
+          <option value="mensual">Mensual</option>
+          <option value="bimestral">Bimestral</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="semestral">Semestral</option>
+          <option value="anual">Anual</option>
+          <option value="extraordinaria">Según necesidad</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <a href="/comites" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">+ Crear comité</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

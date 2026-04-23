@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% set active_page = "ambiente_fisico" %}
+{% block title %}Nuevo Mantenimiento — Ambiente Físico{% endblock %}
+{% block page_title %}Nuevo Mantenimiento{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Programar mantenimiento</h1><div class="subtitle">Cronograma de mantenimiento de infraestructura física</div></div>
+  <a href="/ambiente-fisico" class="btn btn-secondary">← Volver</a>
+</div>
+<div style="max-width:680px;"><div class="card">
+  <form action="/ambiente-fisico/nuevo" method="post">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Área *</label><input type="text" name="area" class="form-control" required placeholder="Urgencias, Hospitalización, Baños piso 2…"></div>
+      <div class="form-group"><label class="form-label">Tipo de trabajo</label>
+        <select name="tipo_trabajo" class="form-control">
+          <option value="">Seleccionar…</option>
+          <option>Pintura</option><option>Plomería</option><option>Eléctrico</option>
+          <option>Carpintería</option><option>Aseo y desinfección</option>
+          <option>Mantenimiento general</option><option>Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Descripción del trabajo</label><textarea name="descripcion" class="form-control" rows="3" placeholder="Detalle del trabajo a realizar…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Responsable</label><input type="text" name="responsable" class="form-control" placeholder="Nombre del responsable interno"></div>
+      <div class="form-group"><label class="form-label">Contratista</label><input type="text" name="contratista" class="form-control" placeholder="Empresa o persona contratada"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Fecha programada</label><input type="date" name="fecha_programada" class="form-control"></div>
+    <div class="divider"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <a href="/ambiente-fisico" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary">🏗️ Programar mantenimiento</button>
+    </div>
+  </form>
+</div></div>
+{% endblock %}
